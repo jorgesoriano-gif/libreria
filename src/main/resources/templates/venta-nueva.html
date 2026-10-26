@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'venta')}">
+<head>
+    <title>Nueva venta · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div class="page-header">
+        <h1 class="page-title">Nueva venta</h1>
+        <p class="page-subtitle">Completa los datos de la venta y agrega los productos al detalle.</p>
+    </div>
+
+    <!-- 1. Datos de la venta -->
+    <div class="card sale-card" style="margin-bottom: 20px;">
+        <h2 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 14px 0;">1. Datos de la venta</h2>
+        <div class="form-row-3">
+            <div class="form-group">
+                <label for="fechaVenta">Fecha de venta *</label>
+                <input type="text" id="fechaVenta" name="fechaVenta" th:value="${fechaHoy}" readonly
+                       style="background: #ffffff; font-weight: 500;">
+            </div>
+            <div class="form-group">
+                <label for="selectCliente">Cliente (opcional)</label>
+                <select id="selectCliente" name="clienteId" form="formConfirmarVenta">
+                    <option value="">— Sin cliente —</option>
+                    <option th:each="c : ${clientes}" th:value="${c.id}"
+                            th:text="${c.nombre + (c.documento != null ? ' · ' + c.documento : '')}"></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="vendedorInput">Vendedor</label>
+                <input type="text" id="vendedorInput" th:value="${usuarioActual}" readonly
+                       style="background: #f1f5f9; color: var(--text-secondary); cursor: not-allowed;">
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Agregar productos -->
+    <div class="card sale-card">
+        <h2 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 14px 0;">2. Agregar productos</h2>
+
+        <!-- Formulario para agregar productos -->
+        <form th:action="@{/ventas/agregar}" method="post" id="formAgregarProducto" style="margin-bottom: 16px;">
+            <div class="add-product-row">
+                <div class="form-group flex-grow">
+                    <label for="inputBuscarProducto">Buscar por código, título o autor</label>
+                    <input type="text" id="inputBuscarProducto" name="codigoOProducto"
+                           list="datalistProductos" placeholder="Buscar producto..." autocomplete="off" required>
+                    <datalist id="datalistProductos">
+                        <option th:each="p : ${catalogo}"
+                                th:value="${p.codigo + ' - ' + p.titulo}"
+                                th:label="${'Stock: ' + p.stock + ' · S/ ' + p.precio}"></option>
+                    </datalist>
+                </div>
+
+                <div class="form-group fixed-qty">
+                    <label for="inputCantidad">Cantidad</label>
+                    <input type="number" id="inputCantidad" name="cantidad" value="1" min="1" required>
+                </div>
+
+                <div class="form-group button-group">
+                    <button type="submit" class="btn btn-search" style="height: 38px;">+ Agregar</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Alerta de stock insuficiente idéntica al prototipo -->
+        <div class="alert-stock-error" th:if="${error}" th:text="${error}">
+            Stock insuficiente para L-0012. Disponible: 1 unidad; solicitadas: 3.
+        </div>
+
+        <!-- Tabla de detalle de la venta -->
+        <div class="table-card" style="box-shadow: none;">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Producto</th>
+                    <th class="num">Stock</th>
+                    <th class="num">Cantidad</th>
+                    <th class="num">Precio unit. (S/)</th>
+                    <th class="num">Subtotal (S/)</th>
+                    <th style="width: 44px; text-align: center;"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="i, iterStat : ${items}"
+                    th:classappend="${iterStat.first} ? 'selected-row'">
+                    <td th:text="${i.codigo}"></td>
+                    <td th:text="${i.titulo}"></td>
+                    <td class="num" th:text="${i.stock}"></td>
+                    <td class="num" th:text="${i.cantidad}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(i.precio, 1, 'COMMA', 2, 'POINT')}"></td>
+                    <td class="num" th:text="${#numbers.formatDecimal(i.subtotal, 1, 'COMMA', 2, 'POINT')}"></td>
+                    <td style="text-align: center;">
+                        <form th:action="@{/ventas/quitar/{id}(id=${i.productoId})}" method="post" style="margin: 0;">
+                            <button type="submit" class="btn-cart-delete" title="Quitar ítem">✕</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(items)}">
+                    <td colspan="7" style="text-align: center; padding: 26px; color: var(--text-muted);">
+                        No hay productos agregados en el detalle de la venta.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sección inferior: Nota y totales/acciones -->
+    <div class="sale-footer-bar">
+        <div class="sale-confirm-note">
+            La venta y el descuento de inventario se confirman juntos.
+        </div>
+
+        <div class="sale-totals-actions">
+            <!-- Tarjeta de Total -->
+            <div class="total-summary-box">
+                <div class="summary-items-text" th:text="${items.size() + ' productos · ' + totalUnidades + ' unidades'}">
+                    3 productos · 4 unidades
+                </div>
+                <div class="summary-total-text">
+                    TOTAL S/ <span th:text="${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}">64.00</span>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="sale-action-buttons">
+                <a th:href="@{/}" class="btn-sale-cancel">Cancelar</a>
+
+                <form th:action="@{/ventas/vaciar}" method="post" style="margin: 0; display: inline;">
+                    <button type="submit" class="btn-sale-clear" th:disabled="${#lists.isEmpty(items)}">Limpiar detalle</button>
+                </form>
+
+                <form th:action="@{/ventas/confirmar}" method="post" id="formConfirmarVenta" style="margin: 0; display: inline;">
+                    <button type="submit" class="btn-sale-confirm" th:disabled="${#lists.isEmpty(items)}">Confirmar venta</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

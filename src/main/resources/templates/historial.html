@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'historial')}">
+<head>
+    <title>Historial de ventas · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div class="page-header">
+        <h1 class="page-title">Historial de ventas</h1>
+        <p class="page-subtitle">Consulta de comprobantes emitidos y detalles de transacciones.</p>
+    </div>
+
+    <form class="filters-bar" th:action="@{/ventas}" method="get">
+        <div class="filter-field">
+            <label for="desde">Desde</label>
+            <input type="date" id="desde" name="desde" th:value="${desde}">
+        </div>
+        <div class="filter-field">
+            <label for="hasta">Hasta</label>
+            <input type="date" id="hasta" name="hasta" th:value="${hasta}">
+        </div>
+        <div class="filter-field">
+            <label for="nro">N.º de comprobante</label>
+            <input type="text" id="nro" name="nro" th:value="${nro}" placeholder="INT-000001">
+        </div>
+        <div class="filter-field flex-grow">
+            <label for="cliente">Cliente</label>
+            <input type="text" id="cliente" name="cliente" th:value="${cliente}" placeholder="Nombre o documento">
+        </div>
+        <div class="filter-actions">
+            <button class="btn btn-search" type="submit">Filtrar</button>
+        </div>
+    </form>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Comprobante</th>
+                <th>Fecha y Hora</th>
+                <th>Cliente</th>
+                <th>Vendedor</th>
+                <th class="num">Total</th>
+                <th style="text-align: right;">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="v : ${ventas}" th:classappend="${seleccion != null and seleccion.id == v.id} ? 'selected-row'">
+                <td><strong style="color: var(--navy);" th:text="${v.nroComprobante}"></strong></td>
+                <td th:text="${#temporals.format(v.fecha, 'dd/MM/yyyy HH:mm')}"></td>
+                <td th:text="${v.cliente != null ? v.cliente.nombre : 'Venta general'}"></td>
+                <td th:text="${v.usuario.usuario}"></td>
+                <td class="num" style="font-weight: 600;" th:text="${'S/ ' + #numbers.formatDecimal(v.total, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td style="text-align: right;">
+                    <a class="btn-action-edit" th:href="@{/ventas(ver=${v.id}, desde=${desde}, hasta=${hasta}, nro=${nro}, cliente=${cliente})}">Ver detalle</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(ventas)}">
+                <td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                    No se encontraron registros de ventas para los filtros indicados.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Detalle de venta seleccionada -->
+    <div class="card" th:if="${seleccion != null}" style="margin-top: 20px; border-left: 4px solid var(--gold);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h2 style="font-size: 1.15rem; color: var(--text-primary); margin: 0;">
+                Detalle de <span style="color: var(--navy);" th:text="${seleccion.nroComprobante}"></span>
+            </h2>
+            <a class="btn btn-primary" th:href="@{/ventas/{id}/comprobante(id=${seleccion.id})}">Imprimir comprobante</a>
+        </div>
+
+        <div class="table-card" style="box-shadow: none; margin-bottom: 14px;">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th class="num">Cantidad</th>
+                    <th class="num">P. Unitario</th>
+                    <th class="num">Subtotal</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="d : ${seleccion.detalles}">
+                    <td>
+                        <strong th:text="${d.producto.codigo}"></strong> · <span th:text="${d.producto.titulo}"></span>
+                    </td>
+                    <td class="num" th:text="${d.cantidad}"></td>
+                    <td class="num" th:text="${'S/ ' + #numbers.formatDecimal(d.precioUnitario, 1, 'COMMA', 2, 'POINT')}"></td>
+                    <td class="num" style="font-weight: 600;" th:text="${'S/ ' + #numbers.formatDecimal(d.subtotal, 1, 'COMMA', 2, 'POINT')}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 10px;">
+            <span style="font-size: 1rem; color: var(--text-secondary); font-weight: 600;">Total venta:</span>
+            <span style="font-size: 1.5rem; font-weight: 700; color: var(--navy);" th:text="${'S/ ' + #numbers.formatDecimal(seleccion.total, 1, 'COMMA', 2, 'POINT')}">S/ 0.00</span>
+        </div>
+    </div>
+</div>
+</body>
+</html>

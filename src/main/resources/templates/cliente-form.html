@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'clientes')}">
+<head>
+    <title>Cliente · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div style="display: flex; justify-content: center; align-items: center; min-height: 70vh;">
+        <div class="modal-card" style="box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); border: 1px solid var(--border-table);">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" th:text="${form.id == null} ? 'Nuevo cliente' : 'Editar cliente'">Cliente</h2>
+                    <p class="modal-subtitle">Ingrese los datos personales o de facturación del cliente.</p>
+                </div>
+                <a th:href="@{/clientes}" class="modal-close" style="text-decoration:none;" aria-label="Cerrar">✕</a>
+            </div>
+
+            <form th:action="@{/clientes}" th:object="${form}" method="post" novalidate>
+                <input type="hidden" th:field="*{id}">
+
+                <div class="modal-grid">
+                    <div class="form-group" th:classappend="${#fields.hasErrors('documento')} ? 'has-error'">
+                        <label for="documento">Documento (DNI o RUC)</label>
+                        <input id="documento" th:field="*{documento}" maxlength="15" inputmode="numeric" placeholder="Ej. 45871236">
+                        <div class="field-error" th:errors="*{documento}"></div>
+                    </div>
+
+                    <div class="form-group" th:classappend="${#fields.hasErrors('telefono')} ? 'has-error'">
+                        <label for="telefono">Teléfono</label>
+                        <input id="telefono" th:field="*{telefono}" maxlength="15" placeholder="Ej. 987654321">
+                        <div class="field-error" th:errors="*{telefono}"></div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 14px;" th:classappend="${#fields.hasErrors('nombre')} ? 'has-error'">
+                    <label for="nombre">Nombre o razón social *</label>
+                    <input id="nombre" th:field="*{nombre}" maxlength="80" placeholder="Ej. María Quispe">
+                    <div class="field-error" th:errors="*{nombre}"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <a class="btn-modal-cancel" style="text-decoration:none; display:inline-flex; align-items:center;" th:href="@{/clientes}">Cancelar</a>
+                    <button class="btn-modal-submit" type="submit">Guardar cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

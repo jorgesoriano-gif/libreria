@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'clientes')}">
+<head>
+    <title>Clientes · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div class="page-header">
+        <h1 class="page-title">Clientes</h1>
+        <p class="page-subtitle">Directorio de clientes y registro de compradores.</p>
+    </div>
+
+    <form class="filters-bar" th:action="@{/clientes}" method="get">
+        <div class="filter-field flex-grow">
+            <label for="q">Búsqueda</label>
+            <input type="text" id="q" name="q" th:value="${q}" placeholder="Documento o nombre">
+        </div>
+        <div class="filter-actions">
+            <button class="btn btn-search" type="submit">Buscar</button>
+            <a class="btn btn-nuevo" th:href="@{/clientes/nuevo}">+ Nuevo cliente</a>
+        </div>
+    </form>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Documento (DNI/RUC)</th>
+                <th>Nombre / Razón social</th>
+                <th>Teléfono</th>
+                <th style="text-align: right;">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${clientes}">
+                <td th:text="${c.documento != null ? c.documento : '—'}"></td>
+                <td th:text="${c.nombre}" style="font-weight: 500;"></td>
+                <td th:text="${c.telefono != null ? c.telefono : '—'}"></td>
+                <td style="text-align: right;">
+                    <a class="btn-action-edit" th:href="@{/clientes/{id}/editar(id=${c.id})}">Editar</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(clientes)}">
+                <td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">
+                    No se encontraron clientes registrados.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-records-count">
+        Mostrando <span th:text="${#lists.size(clientes)}">0</span> registros...
+    </div>
+</div>
+</body>
+</html>
