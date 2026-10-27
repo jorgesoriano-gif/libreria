@@ -3,6 +3,7 @@ package com.utp.libreria.web;
 import com.utp.libreria.model.Cliente;
 import com.utp.libreria.repository.ClienteRepository;
 import jakarta.validation.Valid;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,7 +23,7 @@ public class ClienteController {
 
     @GetMapping
     public String lista(@RequestParam(defaultValue = "") String q, Model model) {
-        model.addAttribute("clientes", clientes.buscar(q.trim()));
+        model.addAttribute("clientes", clientes.buscar(StringUtils.normalizeSpace(q)));
         model.addAttribute("q", q);
         return "clientes";
     }

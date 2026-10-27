@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'usuarios')}">
+<head>
+    <title>Usuarios y roles · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div class="page-header">
+        <h1 class="page-title">Usuarios y roles</h1>
+        <p class="page-subtitle">Cuentas de acceso. Las contraseñas se guardan con hash BCrypt.</p>
+    </div>
+
+    <div class="filters-bar">
+        <div class="filter-actions" style="margin-left:auto;">
+            <a class="btn btn-nuevo" th:href="@{/usuarios/nuevo}">+ Nuevo usuario</a>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Nombre</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th style="text-align:right;">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="u : ${usuarios}">
+                <td th:text="${u.usuario}" style="font-weight:500;"></td>
+                <td th:text="${u.nombre}"></td>
+                <td th:text="${u.rol.nombre}"></td>
+                <td><span class="badge-tag" th:classappend="${u.activo} ? 'good' : 'bad'" th:text="${u.activo ? 'Activo' : 'Inactivo'}"></span></td>
+                <td style="text-align:right;">
+                    <div class="table-row-actions" style="justify-content:flex-end;">
+                        <a class="btn-action-edit" th:href="@{/usuarios/{id}/editar(id=${u.id})}">Editar</a>
+                        <form th:action="@{/usuarios/{id}/estado(id=${u.id})}" method="post" style="margin:0; display:inline;">
+                            <button type="submit" class="btn-action-delete" th:text="${u.activo ? 'Desactivar' : 'Activar'}">Desactivar</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="table-records-count">Mostrando <span th:text="${#lists.size(usuarios)}">0</span> registros...</div>
+</div>
+</body>
+</html>

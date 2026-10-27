@@ -25,6 +25,10 @@ public class SecurityConfig {
                 // Solo Administrador: crear, editar y activar/desactivar productos
                 .requestMatchers("/productos/nuevo", "/productos/*/editar").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/productos/**").hasRole("ADMIN")
+                // Solo Administrador: categorías, usuarios y reportes
+                .requestMatchers("/categorias/**", "/usuarios/**", "/reportes/**").hasRole("ADMIN")
+                // Administrador e Inventario: stock, proveedores y compras
+                .requestMatchers("/inventario/**", "/proveedores/**", "/compras/**").hasAnyRole("ADMIN", "INVENTARIO")
                 // Vendedor (y Administrador)
                 .requestMatchers("/clientes/**", "/ventas/**").hasAnyRole("ADMIN", "VENDEDOR")
                 // Resto (panel y consulta de productos): cualquier usuario autenticado

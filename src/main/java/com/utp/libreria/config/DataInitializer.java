@@ -32,15 +32,18 @@ public class DataInitializer implements CommandLineRunner {
     private final CategoriaRepository categorias;
     private final ProductoRepository productos;
     private final ClienteRepository clientes;
+    private final ProveedorRepository proveedores;
     private final PasswordEncoder encoder;
 
     public DataInitializer(RolRepository roles, UsuarioRepository usuarios, CategoriaRepository categorias,
-                           ProductoRepository productos, ClienteRepository clientes, PasswordEncoder encoder) {
+                           ProductoRepository productos, ClienteRepository clientes,
+                           ProveedorRepository proveedores, PasswordEncoder encoder) {
         this.roles = roles;
         this.usuarios = usuarios;
         this.categorias = categorias;
         this.productos = productos;
         this.clientes = clientes;
+        this.proveedores = proveedores;
         this.encoder = encoder;
     }
 
@@ -69,11 +72,11 @@ public class DataInitializer implements CommandLineRunner {
         crearUsuario(vendedor, "vendedor2", "Vendedor Dos (inactivo)", false);
         crearUsuario(inventario, "inventario1", "Encargado Inventario", true);
 
-        Categoria novela = categorias.save(new Categoria("Novela"));
-        Categoria escolar = categorias.save(new Categoria("Texto escolar"));
-        Categoria infantil = categorias.save(new Categoria("Infantil"));
-        Categoria utiles = categorias.save(new Categoria("Útiles de escritorio"));
-        Categoria papel = categorias.save(new Categoria("Papelería"));
+        Categoria novela = categorias.save(new Categoria("CAT-001", "Novela"));
+        Categoria escolar = categorias.save(new Categoria("CAT-002", "Texto escolar"));
+        Categoria infantil = categorias.save(new Categoria("CAT-003", "Infantil"));
+        Categoria utiles = categorias.save(new Categoria("CAT-004", "Útiles de escritorio"));
+        Categoria papel = categorias.save(new Categoria("CAT-005", "Papelería"));
 
         producto(novela, "LIB-0001", "Conversación en La Catedral", "Mario Vargas Llosa", "69.90", 12, 3);
         producto(novela, "LIB-0002", "Los ríos profundos", "José María Arguedas", "39.50", 8, 3);
@@ -90,7 +93,18 @@ public class DataInitializer implements CommandLineRunner {
         Cliente c2 = new Cliente();
         c2.setDocumento("20512345678"); c2.setNombre("Colegio San Martín S.A.C."); c2.setTelefono("014567890");
         clientes.save(c2);
+        proveedor("20123456789", "Distribuidora de Libros Andina S.A.C.", "012345678", "ventas@andina.example.com");
+        proveedor("20987654321", "Papelera Central E.I.R.L.", "017654321", "pedidos@papelera.example.com");
         log.info("Base vacía: datos de ejemplo cargados.");
+    }
+
+    private void proveedor(String ruc, String razonSocial, String telefono, String correo) {
+        Proveedor p = new Proveedor();
+        p.setRuc(ruc);
+        p.setRazonSocial(razonSocial);
+        p.setTelefono(telefono);
+        p.setCorreo(correo);
+        proveedores.save(p);
     }
 
     private void crearUsuario(Rol rol, String usuario, String nombre, boolean activo) {

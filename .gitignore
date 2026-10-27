@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Archivos de log y de IDE
+logs/
+*.log

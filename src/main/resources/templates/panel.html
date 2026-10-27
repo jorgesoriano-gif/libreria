@@ -64,6 +64,9 @@
             <a class="btn btn-nuevo" th:if="${puedeVender}" th:href="@{/ventas/nueva}">+ Nueva venta</a>
             <a class="btn btn-search" th:if="${puedeVender}" th:href="@{/ventas}">Historial de ventas</a>
             <a class="btn btn-outline" th:href="@{/productos}">Catálogo de productos</a>
+            <a class="btn btn-search" th:if="${puedeInventario}" th:href="@{/inventario}">Inventario</a>
+            <a class="btn btn-outline" th:if="${puedeInventario}" th:href="@{/compras/nueva}">+ Orden de compra</a>
+            <a class="btn btn-outline" th:if="${esAdmin}" th:href="@{/reportes}">Reportes</a>
         </div>
     </div>
 </div>

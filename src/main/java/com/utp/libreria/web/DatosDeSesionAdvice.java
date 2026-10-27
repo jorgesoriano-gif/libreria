@@ -32,6 +32,11 @@ public class DatosDeSesionAdvice {
         return tiene(auth, "ADMIN") || tiene(auth, "VENDEDOR");
     }
 
+    @ModelAttribute("puedeInventario")
+    public boolean puedeInventario(Authentication auth) {
+        return tiene(auth, "ADMIN") || tiene(auth, "INVENTARIO");
+    }
+
     @ModelAttribute("rolEtiqueta")
     public String rolEtiqueta(Authentication auth) {
         if (tiene(auth, "ADMIN")) return "Administrador";

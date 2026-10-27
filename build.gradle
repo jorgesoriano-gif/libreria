@@ -23,6 +23,13 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// Librerías de apoyo (rúbrica: Guava, Apache POI, Apache Commons y Logback)
+	implementation 'com.google.guava:guava:33.4.8-jre'
+	implementation 'org.apache.poi:poi-ooxml:5.4.1'
+	implementation 'org.apache.commons:commons-lang3:3.18.0'
+	implementation 'commons-validator:commons-validator:1.9.0'
+	// Logback llega con spring-boot-starter (logging); se configura en logback-spring.xml
+
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	runtimeOnly 'com.h2database:h2'   // solo para el perfil "h2" y las pruebas
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'

@@ -4,6 +4,7 @@ import com.utp.libreria.model.Producto;
 import com.utp.libreria.repository.CategoriaRepository;
 import com.utp.libreria.repository.ProductoRepository;
 import jakarta.validation.Valid;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -26,7 +27,7 @@ public class ProductoController {
     @GetMapping
     public String lista(@RequestParam(defaultValue = "") String q,
                         @RequestParam(defaultValue = "0") long categoria, Model model) {
-        model.addAttribute("productos", productos.buscar(q.trim(), categoria, false));
+        model.addAttribute("productos", productos.buscar(StringUtils.normalizeSpace(q), categoria, false));
         model.addAttribute("categorias", categorias.findAllByOrderByNombre());
         model.addAttribute("q", q);
         model.addAttribute("categoria", categoria);

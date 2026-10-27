@@ -1,7 +1,10 @@
 package com.utp.libreria.service;
 
+import com.google.common.base.Preconditions;
 import com.utp.libreria.model.*;
 import com.utp.libreria.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -12,6 +15,8 @@ import java.util.List;
 @Service
 public class VentaService {
 
+    private static final Logger log = LoggerFactory.getLogger(VentaService.class);
+
     /** Serializa el cálculo del correlativo entre ventas simultáneas. */
     private static final Object BLOQUEO_CORRELATIVO = new Object();
 
@@ -19,15 +24,17 @@ public class VentaService {
     private final ProductoRepository productos;
     private final ClienteRepository clientes;
     private final UsuarioRepository usuarios;
+    private final MovimientoInventarioRepository movimientos;
     private final TransactionTemplate tx;
 
     public VentaService(VentaRepository ventas, ProductoRepository productos, ClienteRepository clientes,
-                        UsuarioRepository usuarios,
+                        UsuarioRepository usuarios, MovimientoInventarioRepository movimientos,
                         PlatformTransactionManager txManager) {
         this.ventas = ventas;
         this.productos = productos;
         this.clientes = clientes;
         this.usuarios = usuarios;
+        this.movimientos = movimientos;
         this.tx = new TransactionTemplate(txManager);
     }
 
@@ -36,6 +43,8 @@ public class VentaService {
      * y descuenta el stock. Ante cualquier fallo se revierte todo.
      */
     public Venta registrar(Long clienteId, String nombreUsuario, List<CarritoVenta.Item> items) {
+        Preconditions.checkNotNull(items, "items");
+        Preconditions.checkNotNull(nombreUsuario, "nombreUsuario");
         if (items.isEmpty()) {
             throw new NegocioException("Agregue al menos un producto a la venta.");
         }
@@ -80,6 +89,20 @@ public class VentaService {
 
                 venta.setTotal(total);
                 Venta guardada = ventas.save(venta);
+
+                // RF04: cada línea deja su movimiento de SALIDA con trazabilidad a la venta
+                for (DetalleVenta d : guardada.getDetalles()) {
+                    MovimientoInventario mov = new MovimientoInventario();
+                    mov.setProducto(d.getProducto());
+                    mov.setVenta(guardada);
+                    mov.setUsuario(vendedor);
+                    mov.setTipo(TipoMovimiento.SALIDA);
+                    mov.setCantidad(d.getCantidad());
+                    mov.setMotivo("Venta " + guardada.getNroComprobante());
+                    movimientos.save(mov);
+                }
+                log.info("Venta {} registrada: {} línea(s), total {}", guardada.getNroComprobante(),
+                        guardada.getDetalles().size(), guardada.getTotal());
                 return guardada;
             });
         }

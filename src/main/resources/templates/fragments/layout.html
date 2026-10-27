@@ -38,19 +38,27 @@
                 <span class="nav-badge">PR</span>
                 <span class="nav-text">Productos</span>
             </a>
-            <a href="javascript:void(0)" onclick="avisoModulo('Categorías')" class="nav-item" th:classappend="${activo == 'categorias'} ? 'active' : 'nav-disabled'">
+            <a th:href="${esAdmin} ? @{/categorias} : 'javascript:void(0)'"
+               th:onclick="${!esAdmin} ? 'avisoModulo(\'Categorías (requiere rol Administrador)\')' : null"
+               class="nav-item" th:classappend="${activo == 'categorias'} ? 'active' : (${!esAdmin} ? 'nav-disabled' : '')">
                 <span class="nav-badge">CA</span>
                 <span class="nav-text">Categorías</span>
             </a>
-            <a href="javascript:void(0)" onclick="avisoModulo('Inventario')" class="nav-item" th:classappend="${activo == 'inventario'} ? 'active' : 'nav-disabled'">
+            <a th:href="${puedeInventario} ? @{/inventario} : 'javascript:void(0)'"
+               th:onclick="${!puedeInventario} ? 'avisoModulo(\'Inventario (requiere rol Administrador o Inventario)\')' : null"
+               class="nav-item" th:classappend="${activo == 'inventario'} ? 'active' : (${!puedeInventario} ? 'nav-disabled' : '')">
                 <span class="nav-badge">IN</span>
                 <span class="nav-text">Inventario</span>
             </a>
-            <a href="javascript:void(0)" onclick="avisoModulo('Proveedores')" class="nav-item" th:classappend="${activo == 'proveedores'} ? 'active' : 'nav-disabled'">
-                <span class="nav-badge">PR</span>
+            <a th:href="${puedeInventario} ? @{/proveedores} : 'javascript:void(0)'"
+               th:onclick="${!puedeInventario} ? 'avisoModulo(\'Proveedores (requiere rol Administrador o Inventario)\')' : null"
+               class="nav-item" th:classappend="${activo == 'proveedores'} ? 'active' : (${!puedeInventario} ? 'nav-disabled' : '')">
+                <span class="nav-badge">PV</span>
                 <span class="nav-text">Proveedores</span>
             </a>
-            <a href="javascript:void(0)" onclick="avisoModulo('Compras')" class="nav-item" th:classappend="${activo == 'compras'} ? 'active' : 'nav-disabled'">
+            <a th:href="${puedeInventario} ? @{/compras} : 'javascript:void(0)'"
+               th:onclick="${!puedeInventario} ? 'avisoModulo(\'Compras (requiere rol Administrador o Inventario)\')' : null"
+               class="nav-item" th:classappend="${activo == 'compras'} ? 'active' : (${!puedeInventario} ? 'nav-disabled' : '')">
                 <span class="nav-badge">CO</span>
                 <span class="nav-text">Compras</span>
             </a>
@@ -72,11 +80,15 @@
                 <span class="nav-badge">HI</span>
                 <span class="nav-text">Historial</span>
             </a>
-            <a href="javascript:void(0)" onclick="avisoModulo('Reportes')" class="nav-item" th:classappend="${activo == 'reportes'} ? 'active' : 'nav-disabled'">
+            <a th:href="${esAdmin} ? @{/reportes} : 'javascript:void(0)'"
+               th:onclick="${!esAdmin} ? 'avisoModulo(\'Reportes (requiere rol Administrador)\')' : null"
+               class="nav-item" th:classappend="${activo == 'reportes'} ? 'active' : (${!esAdmin} ? 'nav-disabled' : '')">
                 <span class="nav-badge">RE</span>
                 <span class="nav-text">Reportes</span>
             </a>
-            <a href="javascript:void(0)" onclick="avisoModulo('Usuarios')" class="nav-item" th:classappend="${activo == 'usuarios'} ? 'active' : 'nav-disabled'">
+            <a th:href="${esAdmin} ? @{/usuarios} : 'javascript:void(0)'"
+               th:onclick="${!esAdmin} ? 'avisoModulo(\'Usuarios (requiere rol Administrador)\')' : null"
+               class="nav-item" th:classappend="${activo == 'usuarios'} ? 'active' : (${!esAdmin} ? 'nav-disabled' : '')">
                 <span class="nav-badge">US</span>
                 <span class="nav-text">Usuarios</span>
             </a>
@@ -88,7 +100,7 @@
         <div th:if="${error}" class="app-alert alert-error" th:text="${error}"></div>
         <th:block th:replace="${contenido}"></th:block>
         <footer class="prototype-footer">
-            Prototipo de alta fidelidad - Los módulos y acciones dependen del rol autenticado
+            Sistema de Gestión de Librería · Los módulos y acciones dependen del rol autenticado
         </footer>
     </main>
 </div>
@@ -98,7 +110,7 @@
 function avisoModulo(nombre) {
     const t = document.getElementById('toastModulo');
     if (!t) return;
-    t.textContent = 'Módulo ' + nombre + ': No disponible en este prototipo.';
+    t.textContent = 'Acceso restringido: ' + nombre + '.';
     t.style.display = 'block';
     setTimeout(() => { t.style.display = 'none'; }, 2600);
 }

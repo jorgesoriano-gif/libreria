@@ -18,6 +18,8 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     long countByActivoTrue();
 
+    List<Producto> findAllByOrderByTitulo();
+
     List<Producto> findByActivoTrueOrderByTitulo();
 
     /** Búsqueda por código, título, autor o categoría. cat = 0 significa todas. */
