@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'reportes')}">
+<head>
+    <title>Reportes · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div class="page-header">
+        <h1 class="page-title">Reportes</h1>
+        <p class="page-subtitle">Ventas por periodo y existencias, con exportación a Excel (.xlsx) y CSV.</p>
+    </div>
+
+    <form class="filters-bar" th:action="@{/reportes}" method="get">
+        <div class="filter-field">
+            <label for="desde">Desde</label>
+            <input type="date" id="desde" name="desde" th:value="${desde}">
+        </div>
+        <div class="filter-field">
+            <label for="hasta">Hasta</label>
+            <input type="date" id="hasta" name="hasta" th:value="${hasta}">
+        </div>
+        <div class="filter-actions">
+            <button class="btn btn-search" type="submit">Generar</button>
+            <a class="btn btn-outline" th:href="@{/reportes/ventas.xlsx(desde=${desde},hasta=${hasta})}">Ventas .xlsx</a>
+            <a class="btn btn-outline" th:href="@{/reportes/ventas.csv(desde=${desde},hasta=${hasta})}">Ventas .csv</a>
+        </div>
+    </form>
+
+    <div class="grid cols-4" style="margin-bottom:20px;">
+        <div class="card kpi">
+            <div class="valor" th:text="${'S/ ' + #numbers.formatDecimal(resumen.total, 1, 'COMMA', 2, 'POINT')}">S/ 0.00</div>
+            <div class="etq">Total vendido en el periodo</div>
+        </div>
+        <div class="card kpi">
+            <div class="valor" th:text="${#lists.size(resumen.ventas)}">0</div>
+            <div class="etq">N.º de ventas</div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+        <h2 style="font-size:1.1rem; margin:0 0 14px 0;">Productos más vendidos</h2>
+        <div class="table-card" style="box-shadow:none;">
+            <table class="data-table">
+                <thead>
+                <tr><th>Código</th><th>Título</th><th class="num">Unidades</th><th class="num">Monto</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${resumen.masVendidos}">
+                    <td th:text="${p.codigo}"></td>
+                    <td th:text="${p.titulo}"></td>
+                    <td class="num" th:text="${p.unidades}"></td>
+                    <td class="num" th:text="${'S/ ' + #numbers.formatDecimal(p.monto, 1, 'COMMA', 2, 'POINT')}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(resumen.masVendidos)}">
+                    <td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">Sin ventas en el periodo.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+        <h2 style="font-size:1.1rem; margin:0 0 14px 0;">Ventas del periodo</h2>
+        <div class="table-card" style="box-shadow:none;">
+            <table class="data-table">
+                <thead>
+                <tr><th>Comprobante</th><th>Fecha</th><th>Cliente</th><th>Vendedor</th><th class="num">Total</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="v : ${resumen.ventas}">
+                    <td th:text="${v.nroComprobante}"></td>
+                    <td th:text="${#temporals.format(v.fecha, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td th:text="${v.cliente != null ? v.cliente.nombre : 'Cliente general'}"></td>
+                    <td th:text="${v.usuario.nombre}"></td>
+                    <td class="num" th:text="${'S/ ' + #numbers.formatDecimal(v.total, 1, 'COMMA', 2, 'POINT')}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(resumen.ventas)}">
+                    <td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Sin ventas en el periodo.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h2 style="font-size:1.1rem; margin:0;">Existencias</h2>
+            <div style="display:flex; gap:8px;">
+                <a class="btn btn-outline" th:href="@{/reportes/existencias.xlsx}">Existencias .xlsx</a>
+                <a class="btn btn-outline" th:href="@{/reportes/existencias.csv}">Existencias .csv</a>
+            </div>
+        </div>
+        <div class="table-card" style="box-shadow:none;">
+            <table class="data-table">
+                <thead>
+                <tr><th>Código</th><th>Título</th><th>Categoría</th><th class="num">Stock</th><th class="num">Mínimo</th><th>Estado</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${existencias}">
+                    <td th:text="${p.codigo}"></td>
+                    <td th:text="${p.titulo}"></td>
+                    <td th:text="${p.categoria.nombre}"></td>
+                    <td class="num"><span class="badge-tag" th:classappend="${p.bajoMinimo} ? 'bad'" th:text="${p.stock}"></span></td>
+                    <td class="num" th:text="${p.stockMinimo}"></td>
+                    <td th:text="${!p.activo ? 'Inactivo' : (p.bajoMinimo ? 'Bajo mínimo' : 'Normal')}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

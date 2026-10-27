@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'productos')}">
+<head>
+    <title>Productos · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div class="page-header">
+        <h1 class="page-title">Productos</h1>
+        <p class="page-subtitle">Administra el catálogo y consulta las existencias.</p>
+    </div>
+
+    <!-- Filtros de búsqueda idénticos al prototipo -->
+    <form class="filters-bar" th:action="@{/productos}" method="get">
+        <div class="filter-field flex-grow">
+            <label for="filtroQ">Búsqueda</label>
+            <input type="text" id="filtroQ" name="q" th:value="${q}" placeholder="Código, título o autor">
+        </div>
+        <div class="filter-field fixed-select">
+            <label for="filtroCat">Categoría</label>
+            <select id="filtroCat" name="categoria">
+                <option value="0">Todas</option>
+                <option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nombre}" th:selected="${c.id == categoria}"></option>
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button class="btn btn-search" type="submit">Buscar</button>
+            <button class="btn btn-nuevo" type="button" th:if="${esAdmin}" onclick="abrirModalNuevo()">+ Nuevo producto</button>
+        </div>
+    </form>
+
+    <!-- Tabla de datos -->
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Código</th>
+                <th>Título</th>
+                <th>Autor</th>
+                <th>Categoría</th>
+                <th class="num">P. Venta</th>
+                <th class="num">Stock</th>
+                <th th:if="${esAdmin}">Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="tablaProductos">
+            <tr th:each="p : ${productos}"
+                th:id="'fila-prod-' + ${p.id}"
+                th:data-id="${p.id}"
+                th:data-codigo="${p.codigo}"
+                th:data-titulo="${p.titulo}"
+                th:data-autor="${p.autor != null ? p.autor : ''}"
+                th:data-categoria="${p.categoria.id}"
+                th:data-precio="${p.precio}"
+                th:data-stock="${p.stock}"
+                th:data-minimo="${p.stockMinimo}"
+                th:data-activo="${p.activo}">
+                <td th:text="${p.codigo}"></td>
+                <td th:text="${p.titulo}"></td>
+                <td th:text="${p.autor != null ? p.autor : '—'}"></td>
+                <td th:text="${p.categoria.nombre}"></td>
+                <td class="num" th:text="${'S/ ' + #numbers.formatDecimal(p.precio, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="num">
+                    <span class="badge-tag" th:classappend="${p.bajoMinimo} ? 'bad'" th:text="${p.stock}"></span>
+                </td>
+                <td th:if="${esAdmin}">
+                    <div class="table-row-actions">
+                        <button type="button" class="btn-action-edit"
+                                onclick="abrirModalEditarDesdeBoton(this)">Editar</button>
+                        <form th:action="@{/productos/{id}/estado(id=${p.id})}" method="post" style="margin:0; display:inline;">
+                            <button type="submit" class="btn-action-delete"
+                                    th:title="${p.activo ? 'Desactivar producto' : 'Activar producto'}"
+                                    th:text="${p.activo ? 'Eliminar' : 'Activar'}">Eliminar</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(productos)}">
+                <td colspan="7" style="text-align:center; padding: 20px; color: var(--text-muted);">
+                    No se encontraron productos con los criterios especificados.
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-records-count">
+        Mostrando <span th:text="${#lists.size(productos)}">0</span> registros...
+    </div>
+
+    <!-- Modal Editar / Nuevo Producto idéntico al diseño -->
+    <div class="modal-backdrop" id="modalProducto" style="display: none;" onclick="manejarClickFondo(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="modalTitulo">Editar producto</h2>
+                    <p class="modal-subtitle" id="modalSubtitulo">Actualiza los datos del producto <span id="lblCodigo">L-0087</span>.</p>
+                </div>
+                <button type="button" class="modal-close" onclick="cerrarModal()" aria-label="Cerrar modal">✕</button>
+            </div>
+
+            <form th:action="@{/productos}" method="post" id="formProducto" novalidate>
+                <input type="hidden" name="id" id="modalId">
+                <input type="hidden" name="stock" id="modalStock" value="0">
+                <input type="hidden" name="activo" id="modalActivo" value="true">
+
+                <div class="modal-grid">
+                    <div class="form-group">
+                        <label for="modalCodigo">Código *</label>
+                        <input type="text" id="modalCodigo" name="codigo" required maxlength="20" placeholder="L-0087">
+                        <span class="field-hint">El código debe ser único.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modalTituloInput">Título *</label>
+                        <input type="text" id="modalTituloInput" name="titulo" required maxlength="120" placeholder="El Principito">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modalAutor">Autor</label>
+                        <input type="text" id="modalAutor" name="autor" maxlength="80" placeholder="A. de Saint-Exupéry">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modalCategoria">Categoría *</label>
+                        <select id="modalCategoria" name="categoriaId" required>
+                            <option value="" disabled selected>Libros</option>
+                            <option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nombre}"></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modalPrecio">Precio de venta (S/) *</label>
+                        <input type="number" id="modalPrecio" name="precio" step="0.01" min="0.01" required placeholder="35.00">
+                        <span class="field-hint">Debe ser mayor que cero.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modalStockMinimo">Stock mínimo *</label>
+                        <input type="number" id="modalStockMinimo" name="stockMinimo" min="0" required placeholder="3">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn-modal-submit" id="btnGuardar">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script colocado dentro de #page para que Thymeleaf lo incluya en layout -->
+    <script>
+    let filaSeleccionadaActual = null;
+
+    function deseleccionarFilas() {
+        document.querySelectorAll('.data-table tr.selected-row').forEach(tr => {
+            tr.classList.remove('selected-row');
+        });
+        filaSeleccionadaActual = null;
+    }
+
+    function abrirModalNuevo() {
+        deseleccionarFilas();
+        document.getElementById('modalId').value = '';
+        document.getElementById('modalCodigo').value = '';
+        document.getElementById('modalTituloInput').value = '';
+        document.getElementById('modalAutor').value = '';
+        document.getElementById('modalCategoria').selectedIndex = 0;
+        document.getElementById('modalPrecio').value = '';
+        document.getElementById('modalStockMinimo').value = '3';
+        document.getElementById('modalStock').value = '0';
+        document.getElementById('modalActivo').value = 'true';
+
+        document.getElementById('modalTitulo').textContent = 'Nuevo producto';
+        document.getElementById('modalSubtitulo').innerHTML = 'Ingresa los datos para registrar un nuevo producto en el catálogo.';
+        document.getElementById('btnGuardar').textContent = 'Guardar producto';
+
+        document.getElementById('modalProducto').style.display = 'flex';
+        document.getElementById('modalCodigo').focus();
+    }
+
+    function abrirModalEditarDesdeBoton(btn) {
+        const tr = btn.closest('tr');
+        if (!tr) return;
+
+        deseleccionarFilas();
+        tr.classList.add('selected-row');
+        filaSeleccionadaActual = tr;
+
+        const id = tr.getAttribute('data-id') || '';
+        const codigo = tr.getAttribute('data-codigo') || '';
+        const titulo = tr.getAttribute('data-titulo') || '';
+        const autor = tr.getAttribute('data-autor') || '';
+        const categoria = tr.getAttribute('data-categoria') || '';
+        const precio = tr.getAttribute('data-precio') || '';
+        const minimo = tr.getAttribute('data-minimo') || '3';
+        const stock = tr.getAttribute('data-stock') || '0';
+        const activo = tr.getAttribute('data-activo') || 'true';
+
+        document.getElementById('modalId').value = id;
+        document.getElementById('modalCodigo').value = codigo;
+        document.getElementById('modalTituloInput').value = titulo;
+        document.getElementById('modalAutor').value = autor;
+        document.getElementById('modalCategoria').value = categoria;
+        document.getElementById('modalPrecio').value = precio;
+        document.getElementById('modalStockMinimo').value = minimo;
+        document.getElementById('modalStock').value = stock;
+        document.getElementById('modalActivo').value = activo;
+
+        document.getElementById('modalTitulo').textContent = 'Editar producto';
+        document.getElementById('modalSubtitulo').innerHTML = 'Actualiza los datos del producto <span id="lblCodigo">' + codigo + '</span>.';
+        document.getElementById('btnGuardar').textContent = 'Guardar cambios';
+
+        document.getElementById('modalProducto').style.display = 'flex';
+        document.getElementById('modalCodigo').focus();
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalProducto').style.display = 'none';
+        deseleccionarFilas();
+    }
+
+    function manejarClickFondo(e) {
+        if (e.target.id === 'modalProducto') {
+            cerrarModal();
+        }
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('modalProducto');
+            if (modal && modal.style.display !== 'none') {
+                cerrarModal();
+            }
+        }
+    });
+    </script>
+</div>
+</body>
+</html>

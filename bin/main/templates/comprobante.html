@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'venta')}">
+<head>
+    <title>Comprobante · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div class="page-header no-print">
+        <h1 class="page-title">Comprobante de venta</h1>
+        <p class="page-subtitle">Emisión y registro fiscal del comprobante.</p>
+    </div>
+
+    <div class="app-alert alert-ok no-print">
+        ✔ Venta registrada exitosamente: comprobante, detalle y actualización de stock confirmados.
+    </div>
+
+    <div class="card comprobante">
+        <div class="cab">
+            <strong style="font-size: 1.15rem; color: var(--navy);">LIBRERÍA PLUMA Y PAPEL</strong><br>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Comprobante Interno de Venta</span><br>
+            <strong style="font-size: 1.1rem; color: var(--navy);" th:text="${venta.nroComprobante}">INT-000001</strong>
+        </div>
+
+        <div style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 16px;">
+            <div><strong>Fecha:</strong> <span th:text="${#temporals.format(venta.fecha, 'dd/MM/yyyy HH:mm')}"></span></div>
+            <div><strong>Vendedor:</strong> <span th:text="${venta.usuario.nombre}"></span></div>
+            <div><strong>Cliente:</strong> <span th:text="${venta.cliente != null ? venta.cliente.nombre : 'Venta general'}"></span></div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 0.88rem;">
+            <thead>
+            <tr style="border-bottom: 1px solid #cbd5e1; text-align: left;">
+                <th style="padding: 6px 4px;">Producto</th>
+                <th class="num" style="padding: 6px 4px; text-align: right;">Cant.</th>
+                <th class="num" style="padding: 6px 4px; text-align: right;">P. Unit.</th>
+                <th class="num" style="padding: 6px 4px; text-align: right;">Subtotal</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="d : ${venta.detalles}" style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 6px 4px;" th:text="${d.producto.codigo + ' ' + d.producto.titulo}"></td>
+                <td class="num" style="padding: 6px 4px; text-align: right;" th:text="${d.cantidad}"></td>
+                <td class="num" style="padding: 6px 4px; text-align: right;" th:text="${#numbers.formatDecimal(d.precioUnitario, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="num" style="padding: 6px 4px; text-align: right;" th:text="${#numbers.formatDecimal(d.subtotal, 1, 'COMMA', 2, 'POINT')}"></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; border-top: 2px dashed #cbd5e1; padding-top: 10px;">
+            <span style="font-weight: 700; font-size: 1.1rem; color: var(--navy);">TOTAL:</span>
+            <span style="font-size: 1.4rem; font-weight: 700; color: var(--navy);" th:text="${'S/ ' + #numbers.formatDecimal(venta.total, 1, 'COMMA', 2, 'POINT')}"></span>
+        </div>
+    </div>
+
+    <div class="no-print" style="display: flex; gap: 10px; margin-top: 16px; justify-content: center;">
+        <a class="btn btn-nuevo" th:href="@{/ventas/nueva}">+ Nueva venta</a>
+        <a class="btn btn-search" th:href="@{/ventas(ver=${venta.id})}">Ver en historial</a>
+        <button class="btn btn-outline" type="button" onclick="window.print()">🖨 Imprimir</button>
+    </div>
+</div>
+</body>
+</html>

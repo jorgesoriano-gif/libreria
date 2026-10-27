@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'inventario')}">
+<head>
+    <title>Inventario · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div class="page-header">
+        <h1 class="page-title">Inventario</h1>
+        <p class="page-subtitle">Existencias, alertas de reposición y movimientos de entrada y salida.</p>
+    </div>
+
+    <div class="grid cols-4" style="margin-bottom:20px;">
+        <div class="card kpi">
+            <div class="valor" style="color: var(--gold);" th:text="${#lists.size(alertas)}">0</div>
+            <div class="etq">Productos en alerta de stock mínimo</div>
+        </div>
+    </div>
+
+    <div class="card" th:if="${!#lists.isEmpty(alertas)}" style="margin-bottom:20px;">
+        <h2 style="font-size:1.1rem; margin:0 0 10px 0;">⚠ Alertas de reposición</h2>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <span class="badge-tag bad" th:each="a : ${alertas}" th:text="${a.codigo + ' · ' + a.stock + '/' + a.stockMinimo}"></span>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+        <h2 style="font-size:1.1rem; margin:0 0 14px 0;">Registrar movimiento</h2>
+        <form th:action="@{/inventario/movimiento}" method="post" class="filters-bar" style="box-shadow:none; padding:0;">
+            <div class="filter-field flex-grow">
+                <label for="productoId">Producto</label>
+                <select id="productoId" name="productoId" required>
+                    <option value="">Seleccione un producto</option>
+                    <option th:each="p : ${catalogo}" th:value="${p.id}"
+                            th:text="${p.codigo + ' - ' + p.titulo + ' (stock ' + p.stock + ')'}"></option>
+                </select>
+            </div>
+            <div class="filter-field fixed-select">
+                <label for="tipo">Tipo</label>
+                <select id="tipo" name="tipo">
+                    <option value="ENTRADA">Entrada</option>
+                    <option value="SALIDA">Salida</option>
+                </select>
+            </div>
+            <div class="filter-field" style="max-width:110px;">
+                <label for="cantidad">Cantidad</label>
+                <input type="number" id="cantidad" name="cantidad" min="1" value="1" required>
+            </div>
+            <div class="filter-field flex-grow">
+                <label for="motivo">Motivo</label>
+                <input type="text" id="motivo" name="motivo" maxlength="100" placeholder="Ej. Merma, conteo físico, devolución" required>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-nuevo" type="submit">Registrar</button>
+            </div>
+        </form>
+    </div>
+
+    <form class="filters-bar" th:action="@{/inventario}" method="get">
+        <div class="filter-field flex-grow">
+            <label for="q">Búsqueda</label>
+            <input type="text" id="q" name="q" th:value="${q}" placeholder="Código, título, autor o categoría">
+        </div>
+        <div class="filter-field fixed-select">
+            <label for="filtroCat">Categoría</label>
+            <select id="filtroCat" name="categoria">
+                <option value="0">Todas</option>
+                <option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nombre}" th:selected="${c.id == categoria}"></option>
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button class="btn btn-search" type="submit">Buscar</button>
+        </div>
+    </form>
+
+    <div class="table-card" style="margin-bottom:24px;">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Código</th>
+                <th>Título</th>
+                <th>Categoría</th>
+                <th class="num">Stock</th>
+                <th class="num">Mínimo</th>
+                <th>Estado</th>
+                <th style="text-align:right;">Historial</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${productos}">
+                <td th:text="${p.codigo}"></td>
+                <td th:text="${p.titulo}"></td>
+                <td th:text="${p.categoria.nombre}"></td>
+                <td class="num"><span class="badge-tag" th:classappend="${p.bajoMinimo} ? 'bad'" th:text="${p.stock}"></span></td>
+                <td class="num" th:text="${p.stockMinimo}"></td>
+                <td>
+                    <span class="badge-tag bad" th:if="${p.bajoMinimo and p.activo}">Reponer</span>
+                    <span class="badge-tag good" th:if="${!p.bajoMinimo and p.activo}">Normal</span>
+                    <span class="badge-tag warn" th:if="${!p.activo}">Inactivo</span>
+                </td>
+                <td style="text-align:right;">
+                    <a class="btn-action-edit" th:href="@{/inventario(historial=${p.id})}">Ver</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(productos)}">
+                <td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">No se encontraron productos.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2 style="font-size:1.1rem; margin:0 0 14px 0;">
+            Últimos movimientos
+            <a th:if="${historial != 0}" class="btn-action-edit" style="margin-left:10px;" th:href="@{/inventario}">Ver todos</a>
+        </h2>
+        <div class="table-card" style="box-shadow:none;">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Producto</th>
+                    <th>Tipo</th>
+                    <th class="num">Cantidad</th>
+                    <th>Motivo</th>
+                    <th>Usuario</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="m : ${movimientos}">
+                    <td th:text="${#temporals.format(m.fecha, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td th:text="${m.producto.codigo + ' - ' + m.producto.titulo}"></td>
+                    <td><span class="badge-tag" th:classappend="${m.tipo.name() == 'ENTRADA'} ? 'good' : 'warn'"
+                              th:text="${m.tipo.name() == 'ENTRADA' ? 'Entrada' : 'Salida'}"></span></td>
+                    <td class="num" th:text="${m.cantidad}"></td>
+                    <td th:text="${m.motivo != null ? m.motivo : '—'}"></td>
+                    <td th:text="${m.usuario.usuario}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(movimientos)}">
+                    <td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">Aún no hay movimientos registrados.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

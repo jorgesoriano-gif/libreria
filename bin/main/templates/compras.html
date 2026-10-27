@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'compras')}">
+<head>
+    <title>Órdenes de compra · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div class="page-header">
+        <h1 class="page-title">Órdenes de compra</h1>
+        <p class="page-subtitle">Pedidos a proveedores y recepción de mercadería.</p>
+    </div>
+
+    <form class="filters-bar" th:action="@{/compras}" method="get">
+        <div class="filter-field flex-grow">
+            <label for="proveedor">Proveedor</label>
+            <select id="proveedor" name="proveedor">
+                <option value="0">Todos</option>
+                <option th:each="p : ${proveedores}" th:value="${p.id}" th:text="${p.razonSocial}" th:selected="${p.id == proveedor}"></option>
+            </select>
+        </div>
+        <div class="filter-field">
+            <label for="desde">Desde</label>
+            <input type="date" id="desde" name="desde" th:value="${desde}">
+        </div>
+        <div class="filter-field">
+            <label for="hasta">Hasta</label>
+            <input type="date" id="hasta" name="hasta" th:value="${hasta}">
+        </div>
+        <div class="filter-field fixed-select">
+            <label for="estado">Estado</label>
+            <select id="estado" name="estado">
+                <option value="">Todos</option>
+                <option th:each="e : ${estados}" th:value="${e.key.name()}" th:text="${e.value}"
+                        th:selected="${estado != null and estado == e.key}"></option>
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button class="btn btn-search" type="submit">Filtrar</button>
+            <a class="btn btn-nuevo" th:href="@{/compras/nueva}">+ Nueva orden</a>
+        </div>
+    </form>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>N.º orden</th>
+                <th>Proveedor</th>
+                <th>Emisión</th>
+                <th>Entrega estimada</th>
+                <th>Estado</th>
+                <th class="num">Total</th>
+                <th style="text-align:right;">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="o : ${ordenes}">
+                <td th:text="${o.numero}" style="font-weight:500;"></td>
+                <td th:text="${o.proveedor.razonSocial}"></td>
+                <td th:text="${#temporals.format(o.fechaEmision, 'dd/MM/yyyy HH:mm')}"></td>
+                <td th:text="${o.fechaEntregaEstimada != null ? #temporals.format(o.fechaEntregaEstimada, 'dd/MM/yyyy') : '—'}"></td>
+                <td><span class="badge-tag" th:classappend="${o.pendiente} ? 'warn' : 'good'" th:text="${o.pendiente ? 'Pendiente' : 'Recibida'}"></span></td>
+                <td class="num" th:text="${'S/ ' + #numbers.formatDecimal(o.total, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td style="text-align:right;">
+                    <a class="btn-action-edit" th:href="@{/compras/{id}(id=${o.id})}" th:text="${o.pendiente ? 'Recepcionar' : 'Ver detalle'}">Ver</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(ordenes)}">
+                <td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">No hay órdenes que coincidan con el filtro.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="table-records-count">Mostrando <span th:text="${#lists.size(ordenes)}">0</span> registros...</div>
+</div>
+</body>
+</html>

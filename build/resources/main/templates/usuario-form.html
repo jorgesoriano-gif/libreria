@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'usuarios')}">
+<head>
+    <title>Usuario · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div style="display:flex; justify-content:center; align-items:center; min-height:70vh;">
+        <div class="modal-card" style="border:1px solid var(--border-table);">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" th:text="${form.id == null} ? 'Nuevo usuario' : 'Editar usuario'">Usuario</h2>
+                    <p class="modal-subtitle">Contraseña: mínimo 8 caracteres con letras y números.</p>
+                </div>
+                <a th:href="@{/usuarios}" class="modal-close" style="text-decoration:none;" aria-label="Cerrar">✕</a>
+            </div>
+            <form th:action="@{/usuarios}" th:object="${form}" method="post" novalidate autocomplete="off">
+                <input type="hidden" th:field="*{id}">
+                <div class="app-alert alert-error" th:if="${#fields.hasGlobalErrors()}">
+                    <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
+                </div>
+                <div class="modal-grid">
+                    <div class="form-group" th:classappend="${#fields.hasErrors('usuario')} ? 'has-error'">
+                        <label for="usuario">Usuario *</label>
+                        <input id="usuario" th:field="*{usuario}" maxlength="30" placeholder="vendedor3">
+                        <div class="field-error" th:errors="*{usuario}"></div>
+                    </div>
+                    <div class="form-group" th:classappend="${#fields.hasErrors('rolId')} ? 'has-error'">
+                        <label for="rolId">Rol *</label>
+                        <select id="rolId" th:field="*{rolId}">
+                            <option value="">Seleccione</option>
+                            <option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.nombre}"></option>
+                        </select>
+                        <div class="field-error" th:errors="*{rolId}"></div>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:14px;" th:classappend="${#fields.hasErrors('nombre')} ? 'has-error'">
+                    <label for="nombre">Nombre completo *</label>
+                    <input id="nombre" th:field="*{nombre}" maxlength="80">
+                    <div class="field-error" th:errors="*{nombre}"></div>
+                </div>
+                <div class="form-group" style="margin-top:14px;">
+                    <label for="clave" th:text="${form.id == null} ? 'Contraseña *' : 'Nueva contraseña (vacío = no cambiar)'">Contraseña *</label>
+                    <input id="clave" name="clave" type="password" autocomplete="new-password" maxlength="60">
+                </div>
+                <div class="form-group" style="margin-top:14px;">
+                    <label style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" th:field="*{activo}" style="width:auto;"> Usuario activo
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn-modal-cancel" style="text-decoration:none; display:inline-flex; align-items:center;" th:href="@{/usuarios}">Cancelar</a>
+                    <button class="btn-modal-submit" type="submit">Guardar usuario</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'panel')}">
+<head>
+    <title>Panel principal · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div class="page-header">
+        <h1 class="page-title">Panel principal</h1>
+        <p class="page-subtitle">Resumen general de operaciones y estado del catálogo.</p>
+    </div>
+
+    <div class="grid cols-4" style="margin-bottom: 20px;">
+        <div class="card kpi">
+            <div class="valor" th:text="${'S/ ' + #numbers.formatDecimal(totalHoy, 1, 'COMMA', 2, 'POINT')}">S/ 0.00</div>
+            <div class="etq">Ventas de hoy</div>
+        </div>
+        <div class="card kpi">
+            <div class="valor" th:text="${cantidadVentas}">0</div>
+            <div class="etq">N.º de ventas hoy</div>
+        </div>
+        <div class="card kpi">
+            <div class="valor" th:text="${productosActivos}">0</div>
+            <div class="etq">Productos activos</div>
+        </div>
+        <div class="card kpi">
+            <div class="valor" style="color: var(--gold);" th:text="${#lists.size(bajoMinimo)}">0</div>
+            <div class="etq">Productos bajo stock mínimo</div>
+        </div>
+    </div>
+
+    <div class="card" th:if="${!#lists.isEmpty(bajoMinimo)}">
+        <h2 style="font-size: 1.1rem; color: var(--text-primary); margin: 0 0 14px 0;">⚠ Alerta de reposición de inventario</h2>
+        <div class="table-card" style="box-shadow: none;">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Título</th>
+                    <th class="num">Stock actual</th>
+                    <th class="num">Stock mínimo</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${bajoMinimo}">
+                    <td th:text="${p.codigo}"></td>
+                    <td th:text="${p.titulo}"></td>
+                    <td class="num"><span class="badge-tag bad" th:text="${p.stock}"></span></td>
+                    <td class="num" th:text="${p.stockMinimo}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="app-alert alert-ok" th:if="${#lists.isEmpty(bajoMinimo)}">
+        ✓ Todos los productos se encuentran sobre su stock mínimo de seguridad.
+    </div>
+
+    <div class="card">
+        <h2 style="font-size: 1.1rem; color: var(--text-primary); margin: 0 0 14px 0;">Accesos rápidos</h2>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a class="btn btn-nuevo" th:if="${puedeVender}" th:href="@{/ventas/nueva}">+ Nueva venta</a>
+            <a class="btn btn-search" th:if="${puedeVender}" th:href="@{/ventas}">Historial de ventas</a>
+            <a class="btn btn-outline" th:href="@{/productos}">Catálogo de productos</a>
+            <a class="btn btn-search" th:if="${puedeInventario}" th:href="@{/inventario}">Inventario</a>
+            <a class="btn btn-outline" th:if="${puedeInventario}" th:href="@{/compras/nueva}">+ Orden de compra</a>
+            <a class="btn btn-outline" th:if="${esAdmin}" th:href="@{/reportes}">Reportes</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#page}, 'proveedores')}">
+<head>
+    <title>Proveedores · Pluma y Papel</title>
+</head>
+<body>
+<div id="page">
+    <div class="page-header">
+        <h1 class="page-title">Proveedores</h1>
+        <p class="page-subtitle">Distribuidores y editoriales registrados con su RUC.</p>
+    </div>
+
+    <form class="filters-bar" th:action="@{/proveedores}" method="get">
+        <div class="filter-field flex-grow">
+            <label for="q">Búsqueda</label>
+            <input type="text" id="q" name="q" th:value="${q}" placeholder="RUC o razón social">
+        </div>
+        <div class="filter-actions">
+            <button class="btn btn-search" type="submit">Buscar</button>
+            <a class="btn btn-nuevo" th:href="@{/proveedores/nuevo}">+ Nuevo proveedor</a>
+        </div>
+    </form>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>RUC</th>
+                <th>Razón social</th>
+                <th>Teléfono</th>
+                <th>Correo</th>
+                <th>Estado</th>
+                <th style="text-align:right;">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${proveedores}">
+                <td th:text="${p.ruc}"></td>
+                <td th:text="${p.razonSocial}" style="font-weight:500;"></td>
+                <td th:text="${p.telefono != null ? p.telefono : '—'}"></td>
+                <td th:text="${p.correo != null ? p.correo : '—'}"></td>
+                <td><span class="badge-tag" th:classappend="${p.activo} ? 'good' : 'bad'" th:text="${p.activo ? 'Activo' : 'Inactivo'}"></span></td>
+                <td style="text-align:right;">
+                    <div class="table-row-actions" style="justify-content:flex-end;">
+                        <a class="btn-action-edit" th:href="@{/proveedores/{id}/editar(id=${p.id})}">Editar</a>
+                        <form th:action="@{/proveedores/{id}/estado(id=${p.id})}" method="post" style="margin:0; display:inline;">
+                            <button type="submit" class="btn-action-delete" th:text="${p.activo ? 'Desactivar' : 'Activar'}">Desactivar</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(proveedores)}">
+                <td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No se encontraron proveedores.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="table-records-count">Mostrando <span th:text="${#lists.size(proveedores)}">0</span> registros...</div>
+</div>
+</body>
+</html>
