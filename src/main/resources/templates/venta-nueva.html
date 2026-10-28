@@ -14,20 +14,50 @@
     <!-- 1. Datos de la venta -->
     <div class="card sale-card" style="margin-bottom: 20px;">
         <h2 style="font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0 0 14px 0;">1. Datos de la venta</h2>
-        <div class="form-row-3">
+        <div style="display: grid; grid-template-columns: 140px 1fr 180px 180px 150px; gap: 12px; align-items: end;">
             <div class="form-group">
-                <label for="fechaVenta">Fecha de venta *</label>
-                <input type="text" id="fechaVenta" name="fechaVenta" th:value="${fechaHoy}" readonly
-                       style="background: #ffffff; font-weight: 500;">
+                <label for="fechaVenta">Fecha *</label>
+                <input type="text" id="fechaVenta" name="fechaVenta" th:value="${fechaHoy}" readonly tabindex="-1"
+                       style="background: #f1f5f9; color: var(--text-secondary); cursor: not-allowed; border-color: #e2e8f0; font-weight: 500;">
             </div>
+
+            <!-- Buscador Interactivo de Cliente (reemplaza al Select simple) -->
+            <div class="form-group interactive-search-group" id="clienteSearchGroup">
+                <label for="inputBuscarCliente">Cliente (opcional)</label>
+                <div class="interactive-search-box">
+                    <span class="search-box-icon">👤</span>
+                    <input type="text" id="inputBuscarCliente"
+                           placeholder="Escribe nombre o documento..."
+                           autocomplete="off" spellcheck="false">
+                    <!-- Campo que se envía con el formulario final de confirmación -->
+                    <input type="hidden" id="clienteId" name="clienteId" form="formConfirmarVenta" value="">
+                    <button type="button" id="btnClearCliente" class="btn-clear-selection" style="display: none;" title="Quitar cliente">✕</button>
+                </div>
+                <div id="dropdownClientes" class="interactive-dropdown" style="display: none;"></div>
+            </div>
+
+            <!-- Tipo de Comprobante -->
             <div class="form-group">
-                <label for="selectCliente">Cliente (opcional)</label>
-                <select id="selectCliente" name="clienteId" form="formConfirmarVenta">
-                    <option value="">— Sin cliente —</option>
-                    <option th:each="c : ${clientes}" th:value="${c.id}"
-                            th:text="${c.nombre + (c.documento != null ? ' · ' + c.documento : '')}"></option>
+                <label for="tipoComprobante">Comprobante *</label>
+                <select id="tipoComprobante" name="tipoComprobante" form="formConfirmarVenta"
+                        style="height: 38px; font-weight: 600; color: var(--navy); border-color: var(--border-field);">
+                    <option value="BOLETA">Boleta de Venta</option>
+                    <option value="FACTURA">Factura</option>
+                    <option value="NOTA_VENTA" selected>Nota de Venta</option>
                 </select>
             </div>
+
+            <!-- Método de Pago -->
+            <div class="form-group">
+                <label for="metodoPago">Método de pago *</label>
+                <select id="metodoPago" name="metodoPago" form="formConfirmarVenta"
+                        style="height: 38px; font-weight: 600; color: var(--navy); border-color: var(--border-field);">
+                    <option value="EFECTIVO" selected>💵 Efectivo</option>
+                    <option value="TARJETA">💳 Tarjeta Crédito/Débito</option>
+                    <option value="YAPE_PLIN">📱 Yape / Plin</option>
+                </select>
+            </div>
+
             <div class="form-group">
                 <label for="vendedorInput">Vendedor</label>
                 <input type="text" id="vendedorInput" th:value="${usuarioActual}" readonly
@@ -43,15 +73,17 @@
         <!-- Formulario para agregar productos -->
         <form th:action="@{/ventas/agregar}" method="post" id="formAgregarProducto" style="margin-bottom: 16px;">
             <div class="add-product-row">
-                <div class="form-group flex-grow">
+                <!-- Buscador Interactivo de Productos -->
+                <div class="form-group flex-grow interactive-search-group" id="productoSearchGroup">
                     <label for="inputBuscarProducto">Buscar por código, título o autor</label>
-                    <input type="text" id="inputBuscarProducto" name="codigoOProducto"
-                           list="datalistProductos" placeholder="Buscar producto..." autocomplete="off" required>
-                    <datalist id="datalistProductos">
-                        <option th:each="p : ${catalogo}"
-                                th:value="${p.codigo + ' - ' + p.titulo}"
-                                th:label="${'Stock: ' + p.stock + ' · S/ ' + p.precio}"></option>
-                    </datalist>
+                    <div class="interactive-search-box">
+                        <span class="search-box-icon">🔍</span>
+                        <input type="text" id="inputBuscarProducto" name="codigoOProducto"
+                               placeholder="Escribe código, título o autor..." autocomplete="off" spellcheck="false" required>
+                        <input type="hidden" id="productoIdInput" name="productoId" value="">
+                        <button type="button" id="btnClearProducto" class="btn-clear-selection" style="display: none;" title="Limpiar selección">✕</button>
+                    </div>
+                    <div id="dropdownProductos" class="interactive-dropdown" style="display: none;"></div>
                 </div>
 
                 <div class="form-group fixed-qty">
@@ -60,12 +92,12 @@
                 </div>
 
                 <div class="form-group button-group">
-                    <button type="submit" class="btn btn-search" style="height: 38px;">+ Agregar</button>
+                    <button type="submit" class="btn btn-outline" style="height: 38px; font-weight: 600;">+ Agregar</button>
                 </div>
             </div>
         </form>
 
-        <!-- Alerta de stock insuficiente idéntica al prototipo -->
+        <!-- Alerta de stock insuficiente -->
         <div class="alert-stock-error" th:if="${error}" th:text="${error}">
             Stock insuficiente para L-0012. Disponible: 1 unidad; solicitadas: 3.
         </div>
@@ -77,10 +109,10 @@
                 <tr>
                     <th>Código</th>
                     <th>Producto</th>
-                    <th class="num">Stock</th>
-                    <th class="num">Cantidad</th>
-                    <th class="num">Precio unit. (S/)</th>
-                    <th class="num">Subtotal (S/)</th>
+                    <th class="num text-end">Stock</th>
+                    <th class="num text-end">Cantidad</th>
+                    <th class="num text-end">Precio unit. (S/)</th>
+                    <th class="num text-end">Subtotal (S/)</th>
                     <th style="width: 44px; text-align: center;"></th>
                 </tr>
                 </thead>
@@ -89,10 +121,10 @@
                     th:classappend="${iterStat.first} ? 'selected-row'">
                     <td th:text="${i.codigo}"></td>
                     <td th:text="${i.titulo}"></td>
-                    <td class="num" th:text="${i.stock}"></td>
-                    <td class="num" th:text="${i.cantidad}"></td>
-                    <td class="num" th:text="${#numbers.formatDecimal(i.precio, 1, 'COMMA', 2, 'POINT')}"></td>
-                    <td class="num" th:text="${#numbers.formatDecimal(i.subtotal, 1, 'COMMA', 2, 'POINT')}"></td>
+                    <td class="num text-end" th:text="${i.stock}"></td>
+                    <td class="num text-end" th:text="${i.cantidad}"></td>
+                    <td class="num text-end" th:text="${#numbers.formatDecimal(i.precio, 1, 'COMMA', 2, 'POINT')}"></td>
+                    <td class="num text-end" th:text="${#numbers.formatDecimal(i.subtotal, 1, 'COMMA', 2, 'POINT')}"></td>
                     <td style="text-align: center;">
                         <form th:action="@{/ventas/quitar/{id}(id=${i.productoId})}" method="post" style="margin: 0;">
                             <button type="submit" class="btn-cart-delete" title="Quitar ítem">✕</button>
@@ -115,14 +147,31 @@
             La venta y el descuento de inventario se confirman juntos.
         </div>
 
-        <div class="sale-totals-actions">
+        <div class="sale-totals-actions" style="align-items: center; gap: 16px;">
+            <!-- Calculadora de Pago y Vuelto (UX de caja) -->
+            <div id="cajaPagoWrapper" style="display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid var(--border-field); border-radius: 8px; padding: 8px 14px;">
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <label for="montoPagadoInput" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Monto pagado (S/)</label>
+                    <input type="number" id="montoPagadoInput" name="montoPagado" form="formConfirmarVenta"
+                           step="0.10" min="0" placeholder="0.00"
+                           style="width: 120px; height: 32px; font-size: 1rem; font-weight: 700; color: var(--navy); border: 1.5px solid var(--border-field); border-radius: 6px; padding: 2px 8px;">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 2px; border-left: 1px solid var(--border-light); padding-left: 10px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Vuelto (S/)</span>
+                    <span id="vueltoDisplay" style="font-size: 1.15rem; font-weight: 800; color: #16a34a; min-width: 90px; height: 32px; display: flex; align-items: center;">
+                        S/ 0.00
+                    </span>
+                </div>
+            </div>
+
             <!-- Tarjeta de Total -->
             <div class="total-summary-box">
                 <div class="summary-items-text" th:text="${items.size() + ' productos · ' + totalUnidades + ' unidades'}">
                     3 productos · 4 unidades
                 </div>
                 <div class="summary-total-text">
-                    TOTAL S/ <span th:text="${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}">64.00</span>
+                    TOTAL S/ <span id="totalVentaText" th:text="${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}">64.00</span>
                 </div>
             </div>
 
@@ -140,6 +189,522 @@
             </div>
         </div>
     </div>
+
+    <!-- Catálogos en memoria para búsqueda interactiva instantánea -->
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+    const catalogoClientes = [
+        /*[# th:each="c : ${clientes}"]*/
+        {
+            id: /*[[${c.id}]]*/ 0,
+            nombre: /*[[${c.nombre}]]*/ '',
+            documento: /*[[${c.documento != null ? c.documento : ''}]]*/ '',
+            telefono: /*[[${c.telefono != null ? c.telefono : ''}]]*/ ''
+        },
+        /*[/]*/
+    ];
+
+    const catalogoProductos = [
+        /*[# th:each="p : ${catalogo}"]*/
+        {
+            id: /*[[${p.id}]]*/ 0,
+            codigo: /*[[${p.codigo}]]*/ '',
+            titulo: /*[[${p.titulo}]]*/ '',
+            autor: /*[[${p.autor != null ? p.autor : ''}]]*/ '',
+            precio: /*[[${#numbers.formatDecimal(p.precio, 1, 'COMMA', 2, 'POINT')}]]*/ '0.00',
+            stock: /*[[${p.stock}]]*/ 0,
+            categoria: /*[[${p.categoria.nombre}]]*/ ''
+        },
+        /*[/]*/
+    ];
+    /*]]>*/
+
+    (function() {
+        function normalizarTexto(txt) {
+            if (!txt) return '';
+            return txt.toString().toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim();
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#039;');
+        }
+
+        // =====================================================================
+        // 1. Buscador Interactivo de Clientes
+        // =====================================================================
+        const inputCliente = document.getElementById('inputBuscarCliente');
+        const hiddenClienteId = document.getElementById('clienteId');
+        const dropdownClientes = document.getElementById('dropdownClientes');
+        const btnClearCliente = document.getElementById('btnClearCliente');
+        let selectedIndexCliente = -1;
+
+        function renderizarClientes(filtro = '') {
+            const query = normalizarTexto(filtro);
+            const tokens = query.split(/\s+/).filter(t => t.length > 0);
+
+            let matches = catalogoClientes.filter(c => {
+                if (!tokens.length) return true;
+                const texto = normalizarTexto(c.nombre + ' ' + c.documento + ' ' + c.telefono);
+                return tokens.every(tok => texto.includes(tok));
+            });
+
+            selectedIndexCliente = -1;
+            let html = '';
+
+            // Opción para Venta Libre / Sin cliente
+            html += `
+                <div class="interactive-item" data-id="" data-nombre="— Sin cliente (Venta libre) —">
+                    <div class="interactive-item-main">
+                        <div class="interactive-item-title" style="color: var(--text-secondary); font-style: italic;">
+                            — Sin cliente (Venta libre) —
+                        </div>
+                        <div class="interactive-item-subtitle">Emite comprobante sin registrar cliente</div>
+                    </div>
+                </div>
+            `;
+
+            if (matches.length === 0) {
+                html += `<div class="interactive-empty">No se encontraron clientes para "${escapeHTML(filtro)}"</div>`;
+            } else {
+                matches.slice(0, 15).forEach(c => {
+                    const docText = c.documento ? `Doc: ${c.documento}` : 'Sin documento';
+                    const telText = c.telefono ? ` · Tel: ${c.telefono}` : '';
+                    html += `
+                        <div class="interactive-item" data-id="${c.id}" data-nombre="${escapeHTML(c.nombre)}" data-doc="${escapeHTML(c.documento)}">
+                            <div class="interactive-item-main">
+                                <div class="interactive-item-title">${escapeHTML(c.nombre)}</div>
+                                <div class="interactive-item-subtitle">${docText}${telText}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            dropdownClientes.innerHTML = html;
+            dropdownClientes.style.display = 'block';
+
+            dropdownClientes.querySelectorAll('.interactive-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const id = item.getAttribute('data-id');
+                    const nombre = item.getAttribute('data-nombre');
+                    const doc = item.getAttribute('data-doc');
+
+                    if (!id) {
+                        // Sin cliente
+                        hiddenClienteId.value = '';
+                        inputCliente.value = '';
+                        inputCliente.placeholder = '— Sin cliente (Venta libre) —';
+                        inputCliente.classList.remove('has-selection');
+                        btnClearCliente.style.display = 'none';
+                    } else {
+                        // Cliente seleccionado
+                        hiddenClienteId.value = id;
+                        inputCliente.value = nombre + (doc ? ` · ${doc}` : '');
+                        inputCliente.classList.add('has-selection');
+                        btnClearCliente.style.display = 'flex';
+                    }
+                    dropdownClientes.style.display = 'none';
+                });
+            });
+        }
+
+        inputCliente.addEventListener('focus', () => {
+            renderizarClientes(inputCliente.classList.contains('has-selection') ? '' : inputCliente.value);
+        });
+
+        inputCliente.addEventListener('input', () => {
+            inputCliente.classList.remove('has-selection');
+            hiddenClienteId.value = '';
+            btnClearCliente.style.display = inputCliente.value ? 'flex' : 'none';
+            renderizarClientes(inputCliente.value);
+        });
+
+        btnClearCliente.addEventListener('click', () => {
+            hiddenClienteId.value = '';
+            inputCliente.value = '';
+            inputCliente.placeholder = 'Escribe nombre o documento...';
+            inputCliente.classList.remove('has-selection');
+            btnClearCliente.style.display = 'none';
+            inputCliente.focus();
+            renderizarClientes('');
+        });
+
+        inputCliente.addEventListener('keydown', (e) => {
+            const items = dropdownClientes.querySelectorAll('.interactive-item');
+            if (dropdownClientes.style.display === 'none' || !items.length) {
+                if (e.key === 'ArrowDown') {
+                    renderizarClientes(inputCliente.value);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndexCliente = (selectedIndexCliente + 1) % items.length;
+                actualizarActivo(items, selectedIndexCliente);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndexCliente = (selectedIndexCliente - 1 + items.length) % items.length;
+                actualizarActivo(items, selectedIndexCliente);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedIndexCliente >= 0 && selectedIndexCliente < items.length) {
+                    items[selectedIndexCliente].click();
+                } else if (items.length > 0) {
+                    items[0].click();
+                }
+            } else if (e.key === 'Escape') {
+                dropdownClientes.style.display = 'none';
+            }
+        });
+
+        // =====================================================================
+        // 2. Buscador Interactivo de Productos
+        // =====================================================================
+        const inputProducto = document.getElementById('inputBuscarProducto');
+        const hiddenProductoId = document.getElementById('productoIdInput');
+        const dropdownProductos = document.getElementById('dropdownProductos');
+        const btnClearProducto = document.getElementById('btnClearProducto');
+        const inputCantidad = document.getElementById('inputCantidad');
+        let selectedIndexProducto = -1;
+
+        function renderizarProductos(filtro = '') {
+            const query = normalizarTexto(filtro);
+            const tokens = query.split(/\s+/).filter(t => t.length > 0);
+
+            let matches = catalogoProductos.filter(p => {
+                if (!tokens.length) return true;
+                const texto = normalizarTexto(p.codigo + ' ' + p.titulo + ' ' + p.autor + ' ' + p.categoria);
+                return tokens.every(tok => texto.includes(tok));
+            });
+
+            selectedIndexProducto = -1;
+            let html = '';
+
+            if (matches.length === 0) {
+                html = `<div class="interactive-empty">No se encontraron productos para "${escapeHTML(filtro)}"</div>`;
+            } else {
+                matches.slice(0, 15).forEach(p => {
+                    const autorText = p.autor ? ` · ${p.autor}` : '';
+                    const stockClass = p.stock > 3 ? 'in-stock' : 'low-stock';
+                    html += `
+                        <div class="interactive-item" data-id="${p.id}" data-codigo="${escapeHTML(p.codigo)}" data-titulo="${escapeHTML(p.titulo)}">
+                            <div class="interactive-item-main">
+                                <div class="interactive-item-title">${escapeHTML(p.codigo)} - ${escapeHTML(p.titulo)}</div>
+                                <div class="interactive-item-subtitle">${escapeHTML(p.categoria)}${escapeHTML(autorText)}</div>
+                            </div>
+                            <div class="interactive-item-meta">
+                                <span class="stock-badge ${stockClass}">Stock: ${p.stock}</span>
+                                <span class="price-tag">S/ ${p.precio}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            dropdownProductos.innerHTML = html;
+            dropdownProductos.style.display = 'block';
+
+            dropdownProductos.querySelectorAll('.interactive-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const id = item.getAttribute('data-id');
+                    const codigo = item.getAttribute('data-codigo');
+                    const titulo = item.getAttribute('data-titulo');
+
+                    hiddenProductoId.value = id;
+                    inputProducto.value = codigo + ' - ' + titulo;
+                    inputProducto.classList.add('has-selection');
+                    btnClearProducto.style.display = 'flex';
+                    dropdownProductos.style.display = 'none';
+
+                    // Pasa el foco al campo cantidad automáticamente
+                    inputCantidad.focus();
+                    inputCantidad.select();
+                });
+            });
+        }
+
+        inputProducto.addEventListener('focus', () => {
+            renderizarProductos(inputProducto.classList.contains('has-selection') ? '' : inputProducto.value);
+        });
+
+        inputProducto.addEventListener('input', () => {
+            inputProducto.classList.remove('has-selection');
+            hiddenProductoId.value = '';
+            btnClearProducto.style.display = inputProducto.value ? 'flex' : 'none';
+            renderizarProductos(inputProducto.value);
+        });
+
+        btnClearProducto.addEventListener('click', () => {
+            hiddenProductoId.value = '';
+            inputProducto.value = '';
+            inputProducto.classList.remove('has-selection');
+            btnClearProducto.style.display = 'none';
+            inputProducto.focus();
+            renderizarProductos('');
+        });
+
+        inputProducto.addEventListener('keydown', (e) => {
+            const items = dropdownProductos.querySelectorAll('.interactive-item');
+            if (dropdownProductos.style.display === 'none' || !items.length) {
+                if (e.key === 'ArrowDown') {
+                    renderizarProductos(inputProducto.value);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndexProducto = (selectedIndexProducto + 1) % items.length;
+                actualizarActivo(items, selectedIndexProducto);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndexProducto = (selectedIndexProducto - 1 + items.length) % items.length;
+                actualizarActivo(items, selectedIndexProducto);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedIndexProducto >= 0 && selectedIndexProducto < items.length) {
+                    items[selectedIndexProducto].click();
+                } else if (items.length > 0) {
+                    items[0].click();
+                }
+            } else if (e.key === 'Escape') {
+                dropdownProductos.style.display = 'none';
+            }
+        });
+
+        function actualizarActivo(items, idx) {
+            items.forEach((it, i) => {
+                it.classList.toggle('active-item', i === idx);
+                if (i === idx) {
+                    it.scrollIntoView({ block: 'nearest' });
+                }
+            });
+        }
+
+        // Cerrar menús al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            const clienteGroup = document.getElementById('clienteSearchGroup');
+            if (clienteGroup && !clienteGroup.contains(e.target)) {
+                dropdownClientes.style.display = 'none';
+            }
+            const prodGroup = document.getElementById('productoSearchGroup');
+            if (prodGroup && !prodGroup.contains(e.target)) {
+                dropdownProductos.style.display = 'none';
+            }
+        });
+    })();
+    </script>
+
+    <!-- Modal Comprobante de Venta -->
+    <div class="modal-backdrop" id="modalComprobante" style="display: none;" onclick="manejarClickFondoComprobante(event)">
+        <div class="modal-card" onclick="event.stopPropagation()" style="max-width: 520px;">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title">Comprobante de venta</h2>
+                    <p class="modal-subtitle">Emisión y registro fiscal del comprobante.</p>
+                </div>
+                <button type="button" class="modal-close" onclick="cerrarModalComprobante()" aria-label="Cerrar modal">✕</button>
+            </div>
+
+            <div class="app-alert alert-ok" style="margin-bottom: 16px;">
+                ✔ Venta registrada exitosamente: comprobante, detalle y actualización de stock confirmados.
+            </div>
+
+            <div id="comprobanteContenido">
+                <!-- Se llena dinámicamente via AJAX -->
+            </div>
+
+            <div class="modal-footer" style="justify-content: center; gap: 10px;">
+                <a class="btn btn-nuevo" href="#" id="btnNuevaVentaModal" onclick="cerrarModalComprobante(); location.reload(); return false;">+ Nueva venta</a>
+                <a class="btn btn-search" href="#" id="btnVerHistorial">Ver en historial</a>
+                <button class="btn btn-outline" type="button" onclick="imprimirComprobante()">🖨 Imprimir</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // =====================================================================
+    // Modal Comprobante de Venta
+    // =====================================================================
+    function cerrarModalComprobante() {
+        document.getElementById('modalComprobante').style.display = 'none';
+        document.getElementById('comprobanteContenido').innerHTML = '';
+    }
+
+    function manejarClickFondoComprobante(e) {
+        if (e.target.id === 'modalComprobante') {
+            cerrarModalComprobante();
+        }
+    }
+
+    function imprimirComprobante() {
+        const contenido = document.getElementById('comprobanteContenido').innerHTML;
+        const ventana = window.open('', '_blank', 'width=420,height=600');
+        ventana.document.write(`
+            <html><head><title>Comprobante</title>
+            <link rel="stylesheet" href="/css/app.css">
+            <style>body{padding:20px;font-family:'Inter',sans-serif;font-size:14px;}</style>
+            </head><body>${contenido}</body></html>
+        `);
+        ventana.document.close();
+        ventana.onload = function() { ventana.print(); };
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('modalComprobante');
+            if (modal && modal.style.display !== 'none') {
+                cerrarModalComprobante();
+            }
+        }
+    });
+
+    // =====================================================================
+    // Cálculo Dinámico de Vuelto y Métodos de Pago
+    // =====================================================================
+    const metodoPagoSelect = document.getElementById('metodoPago');
+    const montoPagadoInput = document.getElementById('montoPagadoInput');
+    const vueltoDisplay = document.getElementById('vueltoDisplay');
+    const cajaPagoWrapper = document.getElementById('cajaPagoWrapper');
+
+    function obtenerTotalActual() {
+        const txt = document.getElementById('totalVentaText');
+        if (!txt) return 0;
+        const numStr = txt.textContent.replace(/[^0-9.]/g, '');
+        return parseFloat(numStr) || 0;
+    }
+
+    function recalcularVuelto() {
+        const total = obtenerTotalActual();
+        const pagado = parseFloat(montoPagadoInput.value) || 0;
+        if (montoPagadoInput.value === '' || isNaN(pagado)) {
+            vueltoDisplay.textContent = 'S/ 0.00';
+            vueltoDisplay.style.color = '#16a34a';
+            return;
+        }
+
+        const vuelto = pagado - total;
+        if (vuelto < 0) {
+            vueltoDisplay.textContent = 'Faltan S/ ' + Math.abs(vuelto).toFixed(2);
+            vueltoDisplay.style.color = '#dc2626';
+        } else {
+            vueltoDisplay.textContent = 'S/ ' + vuelto.toFixed(2);
+            vueltoDisplay.style.color = '#16a34a';
+        }
+    }
+
+    if (montoPagadoInput) {
+        montoPagadoInput.addEventListener('input', recalcularVuelto);
+    }
+
+    if (metodoPagoSelect) {
+        metodoPagoSelect.addEventListener('change', function() {
+            if (this.value !== 'EFECTIVO') {
+                montoPagadoInput.value = '';
+                montoPagadoInput.disabled = true;
+                montoPagadoInput.placeholder = 'Exacto';
+                vueltoDisplay.textContent = 'S/ 0.00';
+                vueltoDisplay.style.color = 'var(--text-muted)';
+            } else {
+                montoPagadoInput.disabled = false;
+                montoPagadoInput.placeholder = '0.00';
+                recalcularVuelto();
+            }
+        });
+    }
+
+    // Interceptar el formulario de confirmar venta para usar AJAX
+    (function() {
+        const formConfirmar = document.getElementById('formConfirmarVenta');
+        if (!formConfirmar) return;
+
+        formConfirmar.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const clienteId = document.getElementById('clienteId') ? document.getElementById('clienteId').value : '';
+            const tipoComp = document.getElementById('tipoComprobante') ? document.getElementById('tipoComprobante').value : 'NOTA_VENTA';
+            const metPago = document.getElementById('metodoPago') ? document.getElementById('metodoPago').value : 'EFECTIVO';
+            const montoPag = document.getElementById('montoPagadoInput') ? document.getElementById('montoPagadoInput').value : '';
+
+            // Validación rápida para factura
+            if (tipoComp === 'FACTURA' && (!clienteId || clienteId.trim() === '')) {
+                alert('Para emitir Factura es obligatorio seleccionar un cliente con RUC (11 dígitos).');
+                return;
+            }
+
+            const body = new URLSearchParams();
+            if (clienteId) body.append('clienteId', clienteId);
+            body.append('tipoComprobante', tipoComp);
+            body.append('metodoPago', metPago);
+            if (montoPag && !isNaN(parseFloat(montoPag))) {
+                body.append('montoPagado', montoPag);
+            }
+
+            // Obtener token CSRF del formulario (Thymeleaf lo inyecta como input hidden)
+            const csrfInput = formConfirmar.querySelector('input[name="_csrf"]');
+            if (csrfInput) body.append('_csrf', csrfInput.value);
+
+            // Deshabilitar botón mientras procesa
+            const btnConfirmar = formConfirmar.querySelector('button[type="submit"]');
+            if (btnConfirmar) {
+                btnConfirmar.disabled = true;
+                btnConfirmar.textContent = 'Procesando...';
+            }
+
+            fetch('/ventas/confirmar-ajax', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: body.toString()
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    // Cargar el fragmento del comprobante
+                    fetch('/ventas/' + data.ventaId + '/comprobante?modal=true')
+                        .then(r => r.text())
+                        .then(html => {
+                            document.getElementById('comprobanteContenido').innerHTML = html;
+                            document.getElementById('btnVerHistorial').href = '/ventas?ver=' + data.ventaId;
+                            document.getElementById('modalComprobante').style.display = 'flex';
+                        });
+                } else {
+                    // Mostrar error en la alerta existente
+                    const alertDiv = document.querySelector('.alert-stock-error');
+                    if (alertDiv) {
+                        alertDiv.textContent = data.error;
+                        alertDiv.style.display = 'block';
+                    } else {
+                        alert(data.error);
+                    }
+                    if (btnConfirmar) {
+                        btnConfirmar.disabled = false;
+                        btnConfirmar.textContent = 'Confirmar venta';
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Error al confirmar venta:', err);
+                alert('Error de conexión al confirmar la venta. Intente de nuevo.');
+                if (btnConfirmar) {
+                    btnConfirmar.disabled = false;
+                    btnConfirmar.textContent = 'Confirmar venta';
+                }
+            });
+        });
+    })();
+    </script>
 </div>
 </body>
 </html>

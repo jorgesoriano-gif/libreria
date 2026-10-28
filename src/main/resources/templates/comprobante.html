@@ -15,17 +15,30 @@
         ✔ Venta registrada exitosamente: comprobante, detalle y actualización de stock confirmados.
     </div>
 
-    <div class="card comprobante">
-        <div class="cab">
-            <strong style="font-size: 1.15rem; color: var(--navy);">LIBRERÍA PLUMA Y PAPEL</strong><br>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">Comprobante Interno de Venta</span><br>
-            <strong style="font-size: 1.1rem; color: var(--navy);" th:text="${venta.nroComprobante}">INT-000001</strong>
+    <div class="card comprobante" style="max-width: 520px; margin: 0 auto;">
+        <div class="cab" style="text-align: center; margin-bottom: 14px;">
+            <strong style="font-size: 1.25rem; color: var(--navy);">LIBRERÍA PLUMA Y PAPEL</strong><br>
+            <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600;"
+                  th:text="${venta.tipoComprobante == 'BOLETA' ? 'Boleta de Venta Electrónica' : (venta.tipoComprobante == 'FACTURA' ? 'Factura Electrónica' : 'Comprobante Interno de Venta')}">
+                Comprobante Interno de Venta
+            </span><br>
+            <strong style="font-size: 1.2rem; color: var(--navy);" th:text="${venta.nroComprobante}">INT-000001</strong>
         </div>
 
-        <div style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 16px;">
+        <div style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 6px;">
             <div><strong>Fecha:</strong> <span th:text="${#temporals.format(venta.fecha, 'dd/MM/yyyy HH:mm')}"></span></div>
             <div><strong>Vendedor:</strong> <span th:text="${venta.usuario.nombre}"></span></div>
-            <div><strong>Cliente:</strong> <span th:text="${venta.cliente != null ? venta.cliente.nombre : 'Venta general'}"></span></div>
+            <div><strong>Cliente:</strong> <span th:text="${venta.cliente != null ? (venta.cliente.nombre + (venta.cliente.documento != null ? ' (' + venta.cliente.documento + ')' : '')) : 'Venta general'}"></span></div>
+            <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between;">
+                <span><strong>Método de pago:</strong>
+                    <span th:text="${venta.metodoPago == 'TARJETA' ? 'Tarjeta Crédito/Débito' : (venta.metodoPago == 'YAPE_PLIN' ? 'Yape / Plin' : 'Efectivo')}">Efectivo</span>
+                </span>
+                <span th:if="${venta.tipoComprobante != null}"
+                      style="font-size: 0.78rem; background: var(--navy); color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 600;"
+                      th:text="${venta.tipoComprobante}">
+                    NOTA_VENTA
+                </span>
+            </div>
         </div>
 
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 0.88rem;">
@@ -47,9 +60,20 @@
             </tbody>
         </table>
 
-        <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; border-top: 2px dashed #cbd5e1; padding-top: 10px;">
-            <span style="font-weight: 700; font-size: 1.1rem; color: var(--navy);">TOTAL:</span>
-            <span style="font-size: 1.4rem; font-weight: 700; color: var(--navy);" th:text="${'S/ ' + #numbers.formatDecimal(venta.total, 1, 'COMMA', 2, 'POINT')}"></span>
+        <!-- Totales, Monto Pagado y Vuelto -->
+        <div style="border-top: 2px dashed #cbd5e1; padding-top: 10px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 4px;" th:if="${venta.montoPagado != null}">
+                <span>Monto pagado:</span>
+                <span th:text="${'S/ ' + #numbers.formatDecimal(venta.montoPagado, 1, 'COMMA', 2, 'POINT')}">S/ 100.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px;" th:if="${venta.montoPagado != null and venta.vuelto != null}">
+                <span style="color: #16a34a; font-weight: 600;">Vuelto entregado:</span>
+                <span style="color: #16a34a; font-weight: 700;" th:text="${'S/ ' + #numbers.formatDecimal(venta.vuelto, 1, 'COMMA', 2, 'POINT')}">S/ 40.10</span>
+            </div>
+            <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; padding-top: 6px;">
+                <span style="font-weight: 700; font-size: 1.1rem; color: var(--navy);">TOTAL:</span>
+                <span style="font-size: 1.4rem; font-weight: 700; color: var(--navy);" th:text="${'S/ ' + #numbers.formatDecimal(venta.total, 1, 'COMMA', 2, 'POINT')}"></span>
+            </div>
         </div>
     </div>
 

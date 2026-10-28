@@ -1,9 +1,7 @@
 package com.utp.libreria.repository;
 
 import com.utp.libreria.model.Producto;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -39,7 +37,10 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     @Query("select p from Producto p where p.activo = true and p.stock <= p.stockMinimo order by p.stock, p.titulo")
     List<Producto> bajoMinimo();
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select p from Producto p where p.id = :id")
+    /**
+     * Bloqueo pesimista compatible universalmente con MySQL, MariaDB y H2.
+     * Evita la sintaxis 'FOR UPDATE OF alias' que causa error 1064 en MariaDB.
+     */
+    @Query(value = "SELECT * FROM producto WHERE producto_id = :id FOR UPDATE", nativeQuery = true)
     Optional<Producto> bloquearPorId(@Param("id") Long id);
 }

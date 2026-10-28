@@ -19,6 +19,21 @@
             <span class="brand-sub">Sistema de Gestión de Librería</span>
         </div>
     </div>
+
+    <!-- Búsqueda Automática Global en Todo el Sistema -->
+    <div class="global-search-wrapper">
+        <div class="global-search-box">
+            <svg class="search-svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="globalSearchInput" placeholder="Buscar en todo el sistema (Ctrl+K)..." autocomplete="off" spellcheck="false">
+            <span id="globalSearchClear" class="search-clear-btn" style="display: none;" title="Limpiar">✕</span>
+            <kbd class="search-shortcut">Ctrl K</kbd>
+        </div>
+        <div id="globalSearchResults" class="global-search-dropdown" style="display: none;"></div>
+    </div>
+
     <div class="user-container">
         <span class="user-text" th:text="${usuarioActual + ' · Rol: ' + rolEtiqueta}">admin · Rol: Administrador</span>
         <form th:action="@{/logout}" method="post" class="logout-form">
@@ -115,5 +130,8 @@ function avisoModulo(nombre) {
     setTimeout(() => { t.style.display = 'none'; }, 2600);
 }
 </script>
+<!-- Script universal de Búsqueda Automática en Tiempo Real -->
+<script th:src="@{/js/busqueda-automatica.js}"></script>
+    <script th:src="@{/js/modal.js}"></script>
 </body>
 </html>

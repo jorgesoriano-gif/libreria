@@ -1,0 +1,64 @@
+<!-- Thymeleaf fragment: receipt card only (for modal injection) -->
+<div th:fragment="receipt (venta)">
+    <div class="card comprobante" style="box-shadow: none; border: 1px solid var(--border-light); margin: 0 auto; max-width: 440px;">
+        <div class="cab" style="text-align: center; margin-bottom: 14px;">
+            <strong style="font-size: 1.15rem; color: var(--navy);">LIBRERÍA PLUMA Y PAPEL</strong><br>
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;"
+                  th:text="${venta.tipoComprobante == 'BOLETA' ? 'Boleta de Venta Electrónica' : (venta.tipoComprobante == 'FACTURA' ? 'Factura Electrónica' : 'Comprobante Interno de Venta')}">
+                Comprobante Interno de Venta
+            </span><br>
+            <strong style="font-size: 1.15rem; color: var(--navy);" th:text="${venta.nroComprobante}">INT-000001</strong>
+        </div>
+
+        <div style="font-size: 0.86rem; line-height: 1.6; margin-bottom: 14px; background: #f8fafc; padding: 10px 12px; border-radius: 6px;">
+            <div><strong>Fecha:</strong> <span th:text="${#temporals.format(venta.fecha, 'dd/MM/yyyy HH:mm')}"></span></div>
+            <div><strong>Vendedor:</strong> <span th:text="${venta.usuario.nombre}"></span></div>
+            <div><strong>Cliente:</strong> <span th:text="${venta.cliente != null ? (venta.cliente.nombre + (venta.cliente.documento != null ? ' (' + venta.cliente.documento + ')' : '')) : 'Venta general'}"></span></div>
+            <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between;">
+                <span><strong>Método de pago:</strong>
+                    <span th:text="${venta.metodoPago == 'TARJETA' ? 'Tarjeta Crédito/Débito' : (venta.metodoPago == 'YAPE_PLIN' ? 'Yape / Plin' : 'Efectivo')}">Efectivo</span>
+                </span>
+                <span th:if="${venta.tipoComprobante != null}"
+                      style="font-size: 0.75rem; background: var(--navy); color: #fff; padding: 1px 6px; border-radius: 4px;"
+                      th:text="${venta.tipoComprobante}">
+                    NOTA_VENTA
+                </span>
+            </div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 0.86rem;">
+            <thead>
+                <tr style="border-bottom: 1px solid #cbd5e1; text-align: left;">
+                    <th style="padding: 6px 4px;">Producto</th>
+                    <th class="num" style="padding: 6px 4px; text-align: right;">Cant.</th>
+                    <th class="num" style="padding: 6px 4px; text-align: right;">P. Unit.</th>
+                    <th class="num" style="padding: 6px 4px; text-align: right;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="d : ${venta.detalles}" style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 6px 4px;" th:text="${d.producto.codigo + ' ' + d.producto.titulo}"></td>
+                    <td class="num" style="padding: 6px 4px; text-align: right;" th:text="${d.cantidad}"></td>
+                    <td class="num" style="padding: 6px 4px; text-align: right;" th:text="${#numbers.formatDecimal(d.precioUnitario, 1, 'COMMA', 2, 'POINT')}"></td>
+                    <td class="num" style="padding: 6px 4px; text-align: right;" th:text="${#numbers.formatDecimal(d.subtotal, 1, 'COMMA', 2, 'POINT')}"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Totales, Monto Pagado y Vuelto -->
+        <div style="border-top: 2px dashed #cbd5e1; padding-top: 8px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 4px;" th:if="${venta.montoPagado != null}">
+                <span>Monto pagado:</span>
+                <span th:text="${'S/ ' + #numbers.formatDecimal(venta.montoPagado, 1, 'COMMA', 2, 'POINT')}">S/ 100.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 6px;" th:if="${venta.montoPagado != null and venta.vuelto != null}">
+                <span style="color: #16a34a; font-weight: 600;">Vuelto entregado:</span>
+                <span style="color: #16a34a; font-weight: 700;" th:text="${'S/ ' + #numbers.formatDecimal(venta.vuelto, 1, 'COMMA', 2, 'POINT')}">S/ 40.10</span>
+            </div>
+            <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; padding-top: 4px;">
+                <span style="font-weight: 700; font-size: 1.1rem; color: var(--navy);">TOTAL:</span>
+                <span style="font-size: 1.4rem; font-weight: 700; color: var(--navy);" th:text="${'S/ ' + #numbers.formatDecimal(venta.total, 1, 'COMMA', 2, 'POINT')}"></span>
+            </div>
+        </div>
+    </div>
+</div>

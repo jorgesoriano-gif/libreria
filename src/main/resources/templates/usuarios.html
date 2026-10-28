@@ -12,7 +12,11 @@
     </div>
 
     <div class="filters-bar">
-        <div class="filter-actions" style="margin-left:auto;">
+        <div class="filter-field flex-grow">
+            <label for="filtroUsuarios">Búsqueda</label>
+            <input type="text" id="filtroUsuarios" name="q" placeholder="Usuario, nombre o rol">
+        </div>
+        <div class="filter-actions">
             <a class="btn btn-nuevo" th:href="@{/usuarios/nuevo}">+ Nuevo usuario</a>
         </div>
     </div>

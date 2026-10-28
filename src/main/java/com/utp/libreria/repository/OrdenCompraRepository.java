@@ -1,9 +1,7 @@
 package com.utp.libreria.repository;
 
 import com.utp.libreria.model.OrdenCompra;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -27,8 +25,10 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
     List<OrdenCompra> buscar(@Param("desde") LocalDateTime desde, @Param("hasta") LocalDateTime hasta,
                              @Param("prov") long prov);
 
-    /** Bloqueo pesimista: evita dobles recepciones concurrentes de la misma orden. */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select o from OrdenCompra o where o.id = :id")
+    /**
+     * Bloqueo pesimista compatible universalmente con MySQL, MariaDB y H2.
+     * Evita la sintaxis 'FOR UPDATE OF alias' que causa error 1064 en MariaDB.
+     */
+    @Query(value = "SELECT * FROM orden_compra WHERE orden_id = :id FOR UPDATE", nativeQuery = true)
     Optional<OrdenCompra> bloquearPorId(@Param("id") Long id);
 }

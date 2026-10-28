@@ -21,7 +21,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(a -> a
-                .requestMatchers("/css/**", "/login", "/error").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/login", "/error").permitAll()
                 // Solo Administrador: crear, editar y activar/desactivar productos
                 .requestMatchers("/productos/nuevo", "/productos/*/editar").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/productos/**").hasRole("ADMIN")

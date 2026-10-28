@@ -32,12 +32,32 @@ public class Venta {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total = BigDecimal.ZERO;
 
+    /** Tipo de comprobante: BOLETA, FACTURA, NOTA_VENTA */
+    @Column(name = "tipo_comprobante", nullable = false, length = 20)
+    private String tipoComprobante = "NOTA_VENTA";
+
+    /** Método de pago: EFECTIVO, TARJETA, YAPE_PLIN */
+    @Column(name = "metodo_pago", nullable = false, length = 20)
+    private String metodoPago = "EFECTIVO";
+
+    /** Monto entregado por el cliente (para calcular vuelto). Opcional. */
+    @Column(name = "monto_pagado", precision = 10, scale = 2)
+    private BigDecimal montoPagado;
+
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleVenta> detalles = new ArrayList<>();
 
     public void agregarDetalle(DetalleVenta d) {
         d.setVenta(this);
         detalles.add(d);
+    }
+
+    // Vuelto calculado (transitorio, no persiste)
+    @Transient
+    public BigDecimal getVuelto() {
+        if (montoPagado == null || montoPagado.compareTo(BigDecimal.ZERO) <= 0) return BigDecimal.ZERO;
+        BigDecimal v = montoPagado.subtract(total);
+        return v.compareTo(BigDecimal.ZERO) >= 0 ? v : BigDecimal.ZERO;
     }
 
     // --- getters y setters ---
@@ -54,6 +74,12 @@ public class Venta {
     public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
     public BigDecimal getTotal() { return total; }
     public void setTotal(BigDecimal total) { this.total = total; }
+    public String getTipoComprobante() { return tipoComprobante; }
+    public void setTipoComprobante(String tipoComprobante) { this.tipoComprobante = tipoComprobante; }
+    public String getMetodoPago() { return metodoPago; }
+    public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
+    public BigDecimal getMontoPagado() { return montoPagado; }
+    public void setMontoPagado(BigDecimal montoPagado) { this.montoPagado = montoPagado; }
     public List<DetalleVenta> getDetalles() { return detalles; }
     public void setDetalles(List<DetalleVenta> detalles) { this.detalles = detalles; }
 }

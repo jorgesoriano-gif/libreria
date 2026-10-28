@@ -6,6 +6,8 @@ import com.utp.libreria.repository.*;
 import com.utp.libreria.service.CarritoVenta;
 import com.utp.libreria.service.NegocioException;
 import com.utp.libreria.service.VentaService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -15,11 +17,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /** M07 Nueva venta, M08 Comprobante y M09 Historial. Vendedor y Administrador. */
 @Controller
 @RequestMapping("/ventas")
 public class VentaController {
+
+    private static final Logger log = LoggerFactory.getLogger(VentaController.class);
 
     private final VentaService servicio;
     private final CarritoVenta carrito;
@@ -99,26 +104,59 @@ public class VentaController {
     }
 
     @PostMapping("/confirmar")
-    public String confirmar(@RequestParam(required = false) Long clienteId, Authentication auth, RedirectAttributes ra) {
+    public String confirmar(@RequestParam(required = false) Long clienteId,
+                            @RequestParam(defaultValue = "NOTA_VENTA") String tipoComprobante,
+                            @RequestParam(defaultValue = "EFECTIVO") String metodoPago,
+                            @RequestParam(required = false) java.math.BigDecimal montoPagado,
+                            Authentication auth, RedirectAttributes ra) {
         try {
-            Venta venta = servicio.registrar(clienteId, auth.getName(), carrito.getItems());
+            Venta venta = servicio.registrar(clienteId, auth.getName(), tipoComprobante, metodoPago, montoPagado, carrito.getItems());
             carrito.vaciar();
             return "redirect:/ventas/" + venta.getId() + "/comprobante";
         } catch (NegocioException e) {
             ra.addFlashAttribute("error", e.getMessage());
         } catch (RuntimeException e) {
-            // Falla de la base de datos: la transacción ya se revirtió (CU-07, A2)
+            log.error("Error al registrar la venta: ", e);
             ra.addFlashAttribute("error", "No se pudo registrar la venta; se revirtió la operación. Intente de nuevo.");
         }
         return "redirect:/ventas/nueva";
     }
 
+    /** Endpoint AJAX para confirmar venta y devolver JSON con el ID */
+    @PostMapping("/confirmar-ajax")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> confirmarAjax(
+            @RequestParam(required = false) Long clienteId,
+            @RequestParam(defaultValue = "NOTA_VENTA") String tipoComprobante,
+            @RequestParam(defaultValue = "EFECTIVO") String metodoPago,
+            @RequestParam(required = false) java.math.BigDecimal montoPagado,
+            Authentication auth) {
+        try {
+            Venta venta = servicio.registrar(clienteId, auth.getName(), tipoComprobante, metodoPago, montoPagado, carrito.getItems());
+            carrito.vaciar();
+            return org.springframework.http.ResponseEntity.ok(Map.of("ok", true, "ventaId", venta.getId()));
+        } catch (NegocioException e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(Map.of("ok", false, "error", e.getMessage()));
+        } catch (RuntimeException e) {
+            log.error("Error al registrar la venta: ", e);
+            return org.springframework.http.ResponseEntity.internalServerError()
+                    .body(Map.of("ok", false, "error", "No se pudo registrar la venta; se revirtió la operación. Intente de nuevo."));
+        }
+    }
+
     // ---------- M08 Comprobante ----------
 
     @GetMapping("/{id}/comprobante")
-    public String comprobante(@PathVariable Long id, Model model, RedirectAttributes ra) {
+    public String comprobante(@PathVariable Long id,
+                             @RequestParam(required = false, name = "modal") Boolean modal,
+                             Model model,
+                             RedirectAttributes ra) {
         return ventas.findById(id).map(v -> {
             model.addAttribute("venta", v);
+            if (Boolean.TRUE.equals(modal)) {
+                // Return fragment for modal usage
+                return "fragments/comprobante-fragment :: receipt";
+            }
             return "comprobante";
         }).orElseGet(() -> {
             ra.addFlashAttribute("error", "La venta no existe.");

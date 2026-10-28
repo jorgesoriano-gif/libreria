@@ -1,43 +1,43 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '4.1.2'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '4.1.2'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.utp'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	// Librerías de apoyo (rúbrica: Guava, Apache POI, Apache Commons y Logback)
-	implementation 'com.google.guava:guava:33.4.8-jre'
-	implementation 'org.apache.poi:poi-ooxml:5.4.1'
-	implementation 'org.apache.commons:commons-lang3:3.18.0'
-	implementation 'commons-validator:commons-validator:1.9.0'
-	// Logback llega con spring-boot-starter (logging); se configura en logback-spring.xml
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
+    // Librerías de apoyo (rúbrica: Guava, Apache POI, Apache Commons y Logback)
+    implementation 'com.google.guava:guava:33.4.8-jre'
+    implementation 'org.apache.poi:poi-ooxml:5.4.1'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
+    implementation 'commons-validator:commons-validator:1.9.0'
 
-	runtimeOnly 'com.mysql:mysql-connector-j'
-	runtimeOnly 'com.h2database:h2'   // solo para el perfil "h2" y las pruebas
-	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-thymeleaf-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'com.h2database:h2'   // solo para el perfil "h2" y las pruebas
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-thymeleaf-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }

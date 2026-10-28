@@ -12,7 +12,11 @@
     </div>
 
     <div class="filters-bar">
-        <div class="filter-actions" style="margin-left:auto;">
+        <div class="filter-field flex-grow">
+            <label for="filtroCategorias">Búsqueda</label>
+            <input type="text" id="filtroCategorias" name="q" placeholder="Código, nombre o descripción">
+        </div>
+        <div class="filter-actions">
             <a class="btn btn-nuevo" th:href="@{/categorias/nueva}">+ Nueva categoría</a>
         </div>
     </div>

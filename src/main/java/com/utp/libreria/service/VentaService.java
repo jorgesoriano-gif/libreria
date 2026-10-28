@@ -39,10 +39,17 @@ public class VentaService {
     }
 
     /**
-     * RF10 / CU-07: transacción atómica. Verifica existencias, inserta la venta y sus detalles
-     * y descuenta el stock. Ante cualquier fallo se revierte todo.
+     * RF10 / CU-07: transacción atómica. Sobrecarga compatible hacia atrás.
      */
     public Venta registrar(Long clienteId, String nombreUsuario, List<CarritoVenta.Item> items) {
+        return registrar(clienteId, nombreUsuario, "NOTA_VENTA", "EFECTIVO", null, items);
+    }
+
+    /**
+     * Registro completo con Tipo de Comprobante, Método de Pago y Monto Pagado.
+     */
+    public Venta registrar(Long clienteId, String nombreUsuario, String tipoComprobante,
+                           String metodoPago, BigDecimal montoPagado, List<CarritoVenta.Item> items) {
         Preconditions.checkNotNull(items, "items");
         Preconditions.checkNotNull(nombreUsuario, "nombreUsuario");
         if (items.isEmpty()) {
@@ -58,10 +65,24 @@ public class VentaService {
                             .orElseThrow(() -> new NegocioException("El cliente seleccionado no existe."));
                 }
 
+                String tipoComp = (tipoComprobante != null && !tipoComprobante.isBlank())
+                        ? tipoComprobante.trim().toUpperCase() : "NOTA_VENTA";
+                String metPago = (metodoPago != null && !metodoPago.isBlank())
+                        ? metodoPago.trim().toUpperCase() : "EFECTIVO";
+
+                if ("FACTURA".equals(tipoComp)) {
+                    if (cliente == null || cliente.getDocumento() == null || cliente.getDocumento().trim().length() != 11) {
+                        throw new NegocioException("Para emitir Factura es obligatorio registrar o seleccionar un cliente con RUC válido (11 dígitos).");
+                    }
+                }
+
                 Venta venta = new Venta();
                 venta.setCliente(cliente);
                 venta.setUsuario(vendedor);
-                venta.setNroComprobante(siguienteComprobante());
+                venta.setTipoComprobante(tipoComp);
+                venta.setMetodoPago(metPago);
+                venta.setMontoPagado(montoPagado);
+                venta.setNroComprobante(siguienteComprobante(tipoComp));
 
                 BigDecimal total = BigDecimal.ZERO;
 
@@ -87,6 +108,11 @@ public class VentaService {
                     productos.save(p);
                 }
 
+                if (montoPagado != null && "EFECTIVO".equals(metPago) && montoPagado.compareTo(total) < 0) {
+                    throw new NegocioException("El monto pagado en efectivo (S/ " + montoPagado
+                            + ") no puede ser menor al total de la venta (S/ " + total + ").");
+                }
+
                 venta.setTotal(total);
                 Venta guardada = ventas.save(venta);
 
@@ -101,18 +127,32 @@ public class VentaService {
                     mov.setMotivo("Venta " + guardada.getNroComprobante());
                     movimientos.save(mov);
                 }
-                log.info("Venta {} registrada: {} línea(s), total {}", guardada.getNroComprobante(),
-                        guardada.getDetalles().size(), guardada.getTotal());
+                log.info("Venta {} [{}] registrada: {} línea(s), total S/ {}", guardada.getNroComprobante(),
+                        guardada.getTipoComprobante(), guardada.getDetalles().size(), guardada.getTotal());
                 return guardada;
             });
         }
     }
 
-    /** RF17: correlativo interno con formato INT-NNNNNN. */
-    private String siguienteComprobante() {
-        int siguiente = ventas.findTopByOrderByNroComprobanteDesc()
-                .map(v -> Integer.parseInt(v.getNroComprobante().substring(4)) + 1)
-                .orElse(1);
-        return String.format("INT-%06d", siguiente);
+    /** Correlativo según el tipo de comprobante (BOL-NNNNNN, FAC-NNNNNN, INT-NNNNNN). */
+    private String siguienteComprobante(String tipo) {
+        String prefijo = switch (tipo) {
+            case "BOLETA" -> "BOL-";
+            case "FACTURA" -> "FAC-";
+            default -> "INT-";
+        };
+        int siguiente = ventas.findAll().stream()
+                .map(Venta::getNroComprobante)
+                .filter(nro -> nro != null && nro.startsWith(prefijo))
+                .mapToInt(nro -> {
+                    try {
+                        return Integer.parseInt(nro.substring(prefijo.length()));
+                    } catch (Exception e) {
+                        return 0;
+                    }
+                })
+                .max()
+                .orElse(0) + 1;
+        return String.format("%s%06d", prefijo, siguiente);
     }
 }
